@@ -17,18 +17,25 @@ const Header = () => {
     ]
 
     return (
-        <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b shadow-sm">
+        <nav className="sticky top-0 z-50 bg-white backdrop-blur-md border-b shadow-sm">
             <div className="container mx-auto flex justify-between items-center py-4">
                 <div className="w-3xs h-12 flex justify-center items-center">
                     <img src={assets.logo__dark} alt="logo" className='bg-cover w-1/2' />
                 </div>
                 <div className='w-fit flex items-center'>
                     {navigation.map((item) => (
-                        <NavLink to={item.link} key={item.link} className={`font-bold! text-xl! px-1.5 text-gray-700! hover:text-gray-950!`}>
+                        <NavLink
+                            to={item.link}
+                            key={item.link}
+                            className={
+                                ({ isActive }) =>
+                                    `text-xl px-1.5 font-bold transition-colors duration-200 
+                                ${isActive ? 'text-blue-300' : 'text-gray-700 hover:text-gray-950'}`
+                            }>
                             {item.name}
                         </NavLink>
                     ))}
-                    <InputSearch className="ml-5"/>
+                    <InputSearch className="ml-5" />
                 </div>
             </div>
         </nav >
