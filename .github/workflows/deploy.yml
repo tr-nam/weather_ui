@@ -10,13 +10,6 @@ jobs:
     steps:
     - name: Deploy using ssh
       uses: appleboy/ssh-action@master
-
-
-    - name: Create .env file
-      run: |
-            touch .env
-            echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" >> .env
-
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
@@ -27,7 +20,8 @@ jobs:
           git fetch origin
           git checkout production
           git pull
+          echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" > .env
           docker build -t weather_ui .
-          docker stop  weather_ui_container || true
-          docker rm  weather_ui_container || true
+          docker stop weather_ui_container || true
+          docker rm weather_ui_container || true
           docker run -d --name weather_ui_container -p 3000:80 weather_ui
