@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/3.0/';
-const GEO_URL = 'http://api.openweathermap.org/geo/1.0/';
+const GEO_URL = 'https://api.openweathermap.org/geo/1.0/';
 
 /**
  * Tìm tọa độ từ tên thành phố sử dụng Geocoding API.
