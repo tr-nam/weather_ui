@@ -1,0 +1,33 @@
+name: Web Deployment
+
+on:
+  push:
+    branches: [production]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy using ssh
+      uses: appleboy/ssh-action@master
+
+
+    - name: Create .env file
+      run: |
+            touch .env
+            echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" >> .env
+
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: |
+          cd project/weather_ui
+          git fetch origin
+          git checkout production
+          git pull
+          docker build -t weather_ui .
+          docker stop  weather_ui_container || true
+          docker rm  weather_ui_container || true
+          docker run -d --name weather_ui_container -p 8000:80 weather_ui
