@@ -1,0 +1,80 @@
+/* Base background styles */
+.weather-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    transition: background-color 0.5s ease;
+  }
+  
+  /* Day background */
+  .weather-bg.day {
+    background: linear-gradient(to top, #87ceeb, #ffffff);
+  }
+  
+  /* Night background */
+  .weather-bg.night {
+    background: linear-gradient(to top, #0f2027, #203a43, #2c5364);
+  }
+  
+  /* Weather Effects */
+  .rain, .snow, .wind {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999;
+  }
+  
+  /* RAIN */
+  .rain::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.2) 2%, transparent 2%),
+                      linear-gradient(to bottom, rgba(255,255,255,0.2) 4%, transparent 4%);
+    background-size: 2px 30px;
+    animation: rain-fall 0.5s linear infinite;
+  }
+  
+  @keyframes rain-fall {
+    from { background-position: 0 -100px; }
+    to { background-position: 0 100px; }
+  }
+  
+  /* SNOW */
+  .snow::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://i.ibb.co/YDyt3dh/snowflake.png');
+    background-size: 15px 15px;
+    animation: snow-fall 5s linear infinite;
+  }
+  
+  @keyframes snow-fall {
+    0% { transform: translateY(-100px); }
+    100% { transform: translateY(100vh); }
+  }
+  
+  /* WIND */
+  .wind::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(120deg, rgba(255,255,255,0.1) 0px, transparent 20px);
+    animation: wind-blow 1s linear infinite;
+  }
+  
+  @keyframes wind-blow {
+    from { background-position: 0 0; }
+    to { background-position: 100px 0; }
+  }
+  
