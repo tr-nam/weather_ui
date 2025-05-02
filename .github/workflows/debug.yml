@@ -1,7 +1,8 @@
 name: SSH Debug
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [production]
 
 jobs:
   debug-ssh:
