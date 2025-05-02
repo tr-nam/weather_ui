@@ -8,45 +8,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy using SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: 22
-          script: |
-            # Tạo thư mục nếu chưa tồn tại
-            mkdir -p project/weather_ui
-            
-            # Di chuyển vào thư mục dự án
-            cd project/weather_ui
-            
-            # Kéo mã nguồn từ repository
-            git fetch origin || git init
-            git checkout production || git clone https://github.com/your-username/your-repo.git . --branch production
-            git pull origin production
-            
-            # Tạo file .env với biến môi trường
-            echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" > .env
-            
-            # Xây dựng và chạy container Docker
-            docker build -t weather_ui .
-            docker stop weather_ui_container || true
-            docker rm weather_ui_container || true
-            docker run -d --name weather_ui_container -p 3000:80 weather_ui
-
-      - name: Check Application Health
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: 22
-          script: |
-            # Kiểm tra ứng dụng có chạy đúng không
-            sleep 5 # Đợi container khởi động
-            curl http://localhost:3000 || echo "Application not responding"
+    - name: Deploy using ssh
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: |
+          cd project/weather_ui
+          git fetch origin
+          git checkout production
+          git pull
+          echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" > .env
+          docker build -t weather_ui .
+          docker stop weather_ui_container || true
+          docker rm weather_ui_container || true
+          docker run -d --name weather_ui_container -p 3000:80 weather_ui
