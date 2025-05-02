@@ -239,7 +239,7 @@ const Home = () => {
           <div className="col-span-2 row-span-5 col-start-4 ">
             <div className="grid grid-cols-2 grid-rows-5 gap-4">
               <CitiesWeather onSelectCity={(selectedCity) => setCity(selectedCity)}/>
-              <div className="col-span-2 row-span-2 row-start-4 shadow-md bg-white rounded-lg">2</div>
+              <div className="col-span-2 row-span-2 row-start-4 shadow-md bg-white rounded-lg"></div>
             </div>
           </div>
         </div>
