@@ -6,15 +6,15 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import WeatherOverlay from '@/components/WeatherOverlay';
 
 // Đường dẫn đến mô hình 3D
 const MODEL_PATHS = {
   SUN: '/models/sun/scene.gltf',
   CLOUD: '/models/cloud/scene.gltf',
-  RAIN_DROP: '/models/rain/scene.gltf',
-  SNOWFLAKE: '/models/snowflake/scene.gltf',
   MOUNTAIN: '/models/mountain/scene.gltf'
 };
+
 /**
  * Component hiệu ứng thời tiết 3D với background được cải thiện
  * @param {Object} props
@@ -27,9 +27,6 @@ const WeatherEffect = ({
   precipitationProbability = 0,
   timeOfDay = 'auto'
 }) => {
-
-
-
   const mountRef = useRef(null);
   const particlesRef = useRef({ lastUpdate: 0 });
   const modelsRef = useRef({ clouds: [] });
@@ -41,9 +38,25 @@ const WeatherEffect = ({
   const controlsRef = useRef(null);
   const initCompletedRef = useRef(false);
   const mountainLoadedRef = useRef(false);
+  const cloudPoolRef = useRef([]);
   const [loadError, setLoadError] = useState(null);
 
-  // Tạo kết cấu hạt tròn
+  const getCloudFromPool = useCallback(() => {
+    if (cloudPoolRef.current.length > 0) {
+      const cloud = cloudPoolRef.current.pop();
+      cloud.visible = true;
+      return cloud;
+    }
+    return null;
+  }, []);
+
+  const returnCloudToPool = useCallback((cloud) => {
+    if (cloud) {
+      cloud.visible = false;
+      cloudPoolRef.current.push(cloud);
+    }
+  }, []);
+
   const createCircleTexture = useCallback(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 32;
@@ -61,7 +74,6 @@ const WeatherEffect = ({
     return texture;
   }, []);
 
-  // Trích xuất thời điểm trong ngày
   const getTimeOfDay = useMemo(() => {
     if (timeOfDay && timeOfDay !== 'auto') return timeOfDay;
     const hour = new Date().getHours();
@@ -71,7 +83,11 @@ const WeatherEffect = ({
     return 'night';
   }, [timeOfDay]);
 
-  // Tạo phương thức để chuyển đổi mô hình dự trữ
+  const cachedGeometries = useMemo(() => ({
+    main: new THREE.SphereGeometry(1.2, 8, 8),
+    small: new THREE.SphereGeometry(0.9, 6, 6)
+  }), []);
+
   const getModelFallback = useCallback(
     (type) => {
       const currentTimeOfDay = getTimeOfDay;
@@ -89,22 +105,20 @@ const WeatherEffect = ({
         case 'cloud':
           return () => {
             const cloudGroup = new THREE.Group();
-            const geometryMain = new THREE.SphereGeometry(0.8, 16, 16);
-            const geometrySmall = new THREE.SphereGeometry(0.6, 16, 16);
             const material = new THREE.MeshStandardMaterial({
               color: currentTimeOfDay === 'night' ? 0x333344 : 0xdddddd,
               transparent: true,
               opacity: 0.9,
               roughness: 0.5,
             });
-            const main = new THREE.Mesh(geometryMain, material);
+            const main = new THREE.Mesh(cachedGeometries.main, material);
             cloudGroup.add(main);
-            for (let i = 0; i < 5; i++) {
-              const sphere = new THREE.Mesh(geometrySmall, material);
+            for (let i = 0; i < 3; i++) {
+              const sphere = new THREE.Mesh(cachedGeometries.small, material);
               sphere.position.set(
-                (Math.random() - 0.5) * 1.5,
-                (Math.random() - 0.5) * 0.5,
-                (Math.random() - 0.5) * 1.5
+                (Math.random() - 0.5) * 2.2,
+                (Math.random() - 0.5) * 0.7,
+                (Math.random() - 0.5) * 2.2
               );
               cloudGroup.add(sphere);
             }
@@ -133,44 +147,6 @@ const WeatherEffect = ({
             mountainGroup.add(mountain);
             return mountainGroup;
           };
-        case 'raindrop':
-          return () => {
-            const geometry = new THREE.CylinderGeometry(0.03, 0.03, 0.5, 4);
-            geometry.rotateX(Math.PI / 2);
-            const material = new THREE.MeshStandardMaterial({
-              color: 0x5599ff,
-              transparent: true,
-              opacity: 0.7,
-              emissive: 0x3377ff,
-              emissiveIntensity: 0.3,
-            });
-            return new THREE.Mesh(geometry, material);
-          };
-        case 'snowflake':
-          return () => {
-            const snowflakeGroup = new THREE.Group();
-            const material = new THREE.MeshBasicMaterial({
-              color: 0xffffff,
-              transparent: true,
-              opacity: 0.9,
-            });
-            for (let i = 0; i < 6; i++) {
-              const armGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.3);
-              const arm = new THREE.Mesh(armGeometry, material);
-              arm.rotation.z = (Math.PI / 3) * i;
-              snowflakeGroup.add(arm);
-              const detailGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.15);
-              const detail1 = new THREE.Mesh(detailGeometry, material);
-              detail1.position.z = 0.15;
-              detail1.rotation.y = Math.PI / 4;
-              arm.add(detail1);
-              const detail2 = new THREE.Mesh(detailGeometry, material);
-              detail2.position.z = 0.15;
-              detail2.rotation.y = -Math.PI / 4;
-              arm.add(detail2);
-            }
-            return snowflakeGroup;
-          };
         default:
           return () => new THREE.Group();
       }
@@ -185,13 +161,10 @@ const WeatherEffect = ({
     return fallbackModel;
   }, [getModelFallback]);
 
-  // Thiết lập ban đầu
   useEffect(() => {
     if (!mountRef.current || initCompletedRef.current) return;
 
     console.log('Initializing WeatherEffect...');
-
-    // Check if mountRef.current exists before removing children
     if (mountRef.current) {
       while (mountRef.current.firstChild) {
         mountRef.current.removeChild(mountRef.current.firstChild);
@@ -214,7 +187,7 @@ const WeatherEffect = ({
       0.1,
       2000
     );
-    camera.position.set(0, 0, 20); // Nâng camera lên để bao quát bầu trời
+    camera.position.set(0, 0, 20);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({
@@ -230,19 +203,23 @@ const WeatherEffect = ({
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
+    // Ensure the renderer canvas is interactive
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.addEventListener('mousedown', () => console.log('Three.js canvas mousedown'));
+
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.enableRotate = true;
     controls.enablePan = false;
     controls.enableZoom = false;
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.enableDamping = false;
+    controls.dampingFactor = 0.01;
     controls.minPolarAngle = Math.PI / 4;
     controls.maxPolarAngle = Math.PI / 2;
     controls.minDistance = 20;
     controls.maxDistance = 20;
-    controls.minAzimuthAngle = -Math.PI / 6; // -30 độ
-    controls.maxAzimuthAngle = Math.PI / 6; // 30 độ
+    controls.minAzimuthAngle = -Math.PI / 6;
+    controls.maxAzimuthAngle = Math.PI / 6;
     controlsRef.current = controls;
 
     const composer = new EffectComposer(renderer);
@@ -270,9 +247,7 @@ const WeatherEffect = ({
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    const createGround = () => {
-      // Không tạo mặt đất
-    };
+    const createGround = () => {};
 
     createGround();
 
@@ -295,12 +270,6 @@ const WeatherEffect = ({
       if (time === 'night') {
         bottomColor = '#001122';
         topColor = '#112244';
-      } else if (condition.includes('rain') || condition.includes('shower')) {
-        bottomColor = '#3a4b5c';
-        topColor = '#5a6b7c';
-      } else if (condition.includes('snow')) {
-        bottomColor = '#90a4be';
-        topColor = '#b0c4de';
       } else if (condition.includes('cloud') || condition.includes('overcast')) {
         bottomColor = '#576979';
         topColor = '#778899';
@@ -323,16 +292,25 @@ const WeatherEffect = ({
 
     const loadMountain = () => {
       if (mountainLoadedRef.current) return;
+      const addMountainLight = (mountain) => {
+        if (getTimeOfDay === 'night') {
+          const mountainLight = new THREE.PointLight(0xaaaaaa, 0.5, 50);
+          mountainLight.position.set(0, -10, -30);
+          scene.add(mountainLight);
+          modelsRef.current.mountainLight = mountainLight;
+        }
+      };
       try {
         loader.load(
           MODEL_PATHS.MOUNTAIN,
           (gltf) => {
             const mountain = gltf.scene;
-            mountain.position.set(0, -40, -50); // Giữ z = -50
+            mountain.position.set(0, -40, -50);
             mountain.scale.set(100, 100, 100);
             scene.add(mountain);
             mountain.castShadow = true;
             modelsRef.current.mountain = mountain;
+            addMountainLight(mountain);
             mountainLoadedRef.current = true;
           },
           undefined,
@@ -340,10 +318,11 @@ const WeatherEffect = ({
             console.error('Error loading mountain model:', error);
             setLoadError('Failed to load mountain model');
             const mountain = getModelFallback('mountain')();
-            mountain.position.set(0, -15, -50); // Giữ z = -50
+            mountain.position.set(0, -15, -50);
             scene.add(mountain);
             mountain.castShadow = true;
             modelsRef.current.mountain = mountain;
+            addMountainLight(mountain);
             mountainLoadedRef.current = true;
           }
         );
@@ -351,10 +330,11 @@ const WeatherEffect = ({
         console.error('Failed to load mountain model:', err);
         setLoadError('Failed to load mountain model');
         const mountain = getModelFallback('mountain')();
-        mountain.position.set(0, -15, -50); // Giữ z = -50
+        mountain.position.set(0, -15, -50);
         scene.add(mountain);
         mountain.castShadow = true;
         modelsRef.current.mountain = mountain;
+        addMountainLight(mountain);
         mountainLoadedRef.current = true;
       }
     };
@@ -363,10 +343,14 @@ const WeatherEffect = ({
 
     const animate = () => {
       if (sceneRef.current && cameraRef.current) {
-        updateParticles();
-        updateModels();
-        updateSunPosition();
-        if (controlsRef.current) {
+        const timestamp = performance.now();
+        updateParticles(timestamp);
+        if (!modelsRef.current.lastModelUpdate || timestamp - modelsRef.current.lastModelUpdate > 50) {
+          modelsRef.current.lastModelUpdate = timestamp;
+          updateModels();
+          updateSunPosition();
+        }
+        if (controlsRef.current && controlsRef.current.update) {
           controlsRef.current.update();
         }
         if (composerRef.current) {
@@ -472,15 +456,15 @@ const WeatherEffect = ({
     const timeInSeconds = Date.now() * 0.0001;
 
     if (currentTime === 'dawn') {
-      sun.position.set(20, 10, -50); // Giữ z = -50
+      sun.position.set(20, 10, -50);
       sun.position.x += Math.sin(timeInSeconds * 0.2) * 2;
       sun.position.y += Math.sin(timeInSeconds * 0.5) * 0.5;
     } else if (currentTime === 'day') {
-      sun.position.set(0, 20, -50); // Giữ z = -50
+      sun.position.set(0, 20, -50);
       sun.position.x += Math.sin(timeInSeconds * 0.1) * 5;
       sun.position.y = 20 + Math.sin(timeInSeconds * 0.2) * 2;
     } else if (currentTime === 'dusk') {
-      sun.position.set(-20, 10, -50); // Giữ z = -50
+      sun.position.set(-20, 10, -50);
       sun.position.x += Math.sin(timeInSeconds * 0.2) * 2;
       sun.position.y += Math.sin(timeInSeconds * 0.5) * 0.5;
     } else {
@@ -506,7 +490,7 @@ const WeatherEffect = ({
     Object.keys(particlesRef.current).forEach((key) => {
       if (key === 'lastUpdate') return;
       if (particlesRef.current[key]?.particles) {
-        scene.remove(particlesRef.current[key]?.particles);
+        scene.remove(particlesRef.current[key].particles);
         if (particlesRef.current[key].particles.geometry) {
           particlesRef.current[key].particles.geometry.dispose();
         }
@@ -522,28 +506,17 @@ const WeatherEffect = ({
 
     if (modelsRef.current.clouds) {
       modelsRef.current.clouds.forEach((cloud) => {
-        scene.remove(cloud);
+        returnCloudToPool(cloud);
       });
       modelsRef.current.clouds = [];
     }
-
-    if (modelsRef.current.raindrops) {
-      modelsRef.current.raindrops.forEach((raindrop) => {
-        scene.remove(raindrop.model);
-      });
-      modelsRef.current.raindrops = [];
-    }
-
-    if (modelsRef.current.snowflakes) {
-      modelsRef.current.snowflakes.forEach((snowflake) => {
-        scene.remove(snowflake.model);
-      });
-      modelsRef.current.snowflakes = [];
-    }
-
     if (modelsRef.current.sun) {
       scene.remove(modelsRef.current.sun);
       modelsRef.current.sun = null;
+    }
+    if (modelsRef.current.mountainLight) {
+      scene.remove(modelsRef.current.mountainLight);
+      modelsRef.current.mountainLight = null;
     }
 
     const setBackgroundColor = (scene) => {
@@ -559,12 +532,6 @@ const WeatherEffect = ({
       if (time === 'night') {
         bottomColor = '#001122';
         topColor = '#112244';
-      } else if (condition.includes('rain') || condition.includes('shower')) {
-        bottomColor = '#3a4b5c';
-        topColor = '#5a6b7c';
-      } else if (condition.includes('snow')) {
-        bottomColor = '#90a4be';
-        topColor = '#b0c4de';
       } else if (condition.includes('cloud') || condition.includes('overcast')) {
         bottomColor = '#576979';
         topColor = '#778899';
@@ -592,7 +559,6 @@ const WeatherEffect = ({
     } else if (currentTimeOfDay === 'night') {
       scene.fog = new THREE.FogExp2(0x001133, 0.035);
     } else if (condition.includes('fog') || condition.includes('mist')) {
-      // Random mật độ sương mù từ 0.03 đến 0.05
       const fogDensity = 0.03 + Math.random() * 0.02;
       scene.fog = new THREE.FogExp2(0xcccccc, fogDensity);
     }
@@ -601,6 +567,13 @@ const WeatherEffect = ({
     if (dirLight) {
       dirLight.color.setHex(currentTimeOfDay === 'night' ? 0x2233aa : 0xffffcc);
       dirLight.intensity = currentTimeOfDay === 'night' ? 0.3 : 1.2;
+    }
+
+    if (currentTimeOfDay === 'night' && modelsRef.current.mountain) {
+      const mountainLight = new THREE.PointLight(0xaaaaaa, 0.5, 50);
+      mountainLight.position.set(0, -10, -30);
+      scene.add(mountainLight);
+      modelsRef.current.mountainLight = mountainLight;
     }
 
     const loader = new GLTFLoader();
@@ -639,13 +612,21 @@ const WeatherEffect = ({
 
     const loadClouds = () => {
       if (
-        condition.includes('cloud') ||
+        condition.includes('clouds') ||
         condition.includes('overcast') ||
         condition.includes('rain') ||
         precipitationProbability > 30
       ) {
-        const cloudCount = condition.includes('overcast') ? 15 : 8;
+        const cloudCount = condition.includes('overcast') ? 5 : 3;
         modelsRef.current.clouds = [];
+
+        for (let i = 0; i < 3; i++) {
+          const poolCloud = getModelFallback('cloud')();
+          poolCloud.visible = false;
+          scene.add(poolCloud);
+          cloudPoolRef.current.push(poolCloud);
+        }
+
         for (let i = 0; i < cloudCount; i++) {
           try {
             loader.load(
@@ -654,10 +635,10 @@ const WeatherEffect = ({
                 const cloud = gltf.scene;
                 cloud.position.set(
                   Math.random() * 200 - 100,
-                  5 + Math.random() * 10,
-                  -60 + Math.random() * 40 // Random z từ -60 đến -20
+                  3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+                  -60 + Math.random() * 40
                 );
-                const scale = 12 + Math.random() * 12; // Tăng scale từ 8-16 thành 12-24
+                const scale = 20 + Math.random() * 30;
                 cloud.scale.set(scale, scale, scale);
                 scene.add(cloud);
                 if (!Array.isArray(modelsRef.current.clouds)) {
@@ -669,13 +650,13 @@ const WeatherEffect = ({
               (error) => {
                 console.error('Error loading cloud model:', error);
                 setLoadError('Failed to load cloud model');
-                const cloud = getModelFallback('cloud')();
+                const cloud = getModelFallback('clouds')();
                 cloud.position.set(
                   Math.random() * 100 - 50,
-                  5 + Math.random() * 10,
-                  -60 + Math.random() * 40 // Random z từ -60 đến -20
+                  3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+                  -60 + Math.random() * 40
                 );
-                const scale = 1.5 + Math.random() * 2; // Tăng scale từ 1-2.5 thành 1.5-3.5
+                const scale = 3 + Math.random() * 3.5;
                 cloud.scale.set(scale, scale, scale);
                 scene.add(cloud);
                 if (!Array.isArray(modelsRef.current.clouds)) {
@@ -690,10 +671,10 @@ const WeatherEffect = ({
             const cloud = getModelFallback('cloud')();
             cloud.position.set(
               Math.random() * 100 - 50,
-              5 + Math.random() * 10,
-              -60 + Math.random() * 40 // Random z từ -60 đến -20
+              3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+              -60 + Math.random() * 40
             );
-            const scale = 1.5 + Math.random() * 2; // Tăng scale từ 1-2.5 thành 1.5-3.5
+            const scale = 3 + Math.random() * 3.5;
             cloud.scale.set(scale, scale, scale);
             scene.add(cloud);
             if (!Array.isArray(modelsRef.current.clouds)) {
@@ -713,234 +694,71 @@ const WeatherEffect = ({
       precipitationProbability > 30
     ) {
       cloudInterval = setInterval(() => {
-        if (sceneRef.current && modelsRef.current.clouds.length < 20) {
-          try {
-            loader.load(
-              MODEL_PATHS.CLOUD,
-              (gltf) => {
-                const cloud = gltf.scene;
-                cloud.position.set(
-                  Math.random() * 200 - 100,
-                  5 + Math.random() * 10,
-                  -60 + Math.random() * 40 // Random z từ -60 đến -20
-                );
-                const scale = 12 + Math.random() * 12; // Tăng scale từ 8-16 thành 12-24
-                cloud.scale.set(scale, scale, scale);
-                sceneRef.current.add(cloud);
-                modelsRef.current.clouds.push(cloud);
-                if (modelsRef.current.clouds.length > 20) {
-                  const oldCloud = modelsRef.current.clouds.shift();
-                  sceneRef.current.remove(oldCloud);
-                }
-              },
-              undefined,
-              (error) => {
-                console.error('Error loading random cloud:', error);
-                const cloud = getModelFallback('cloud')();
-                cloud.position.set(
-                  Math.random() * 100 - 50,
-                  5 + Math.random() * 10,
-                  -60 + Math.random() * 40 // Random z từ -60 đến -20
-                );
-                const scale = 1.5 + Math.random() * 2; // Tăng scale từ 1-2.5 thành 1.5-3.5
-                cloud.scale.set(scale, scale, scale);
-                sceneRef.current.add(cloud);
-                modelsRef.current.clouds.push(cloud);
-                if (modelsRef.current.clouds.length > 20) {
-                  const oldCloud = modelsRef.current.clouds.shift();
-                  sceneRef.current.remove(oldCloud);
-                }
-              }
-            );
-          } catch (err) {
-            console.error('Failed to load random cloud:', err);
-            const cloud = getModelFallback('cloud')();
+        if (sceneRef.current && modelsRef.current.clouds.length < 12) {
+          let cloud = getCloudFromPool();
+          if (cloud) {
             cloud.position.set(
-              Math.random() * 100 - 50,
-              5 + Math.random() * 10,
-              -60 + Math.random() * 40 // Random z từ -60 đến -20
+              100,
+              3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+              -60 + Math.random() * 40
             );
-            const scale = 1.5 + Math.random() * 2; // Tăng scale từ 1-2.5 thành 1.5-3.5
-            cloud.scale.set(scale, scale, scale);
-            sceneRef.current.add(cloud);
             modelsRef.current.clouds.push(cloud);
-            if (modelsRef.current.clouds.length > 20) {
-              const oldCloud = modelsRef.current.clouds.shift();
-              sceneRef.current.remove(oldCloud);
+          } else {
+            try {
+              loader.load(
+                MODEL_PATHS.CLOUD,
+                (gltf) => {
+                  cloud = gltf.scene;
+                  cloud.position.set(
+                    100,
+                    3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+                    -60 + Math.random() * 40
+                  );
+                  const scale = 20 + Math.random() * 30;
+                  cloud.scale.set(scale, scale, scale);
+                  sceneRef.current.add(cloud);
+                  modelsRef.current.clouds.push(cloud);
+                },
+                undefined,
+                (error) => {
+                  console.error('Error loading random cloud:', error);
+                  cloud = getModelFallback('cloud')();
+                  cloud.position.set(
+                    100,
+                    3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+                    -60 + Math.random() * 40
+                  );
+                  const scale = 3 + Math.random() * 3.5;
+                  cloud.scale.set(scale, scale, scale);
+                  sceneRef.current.add(cloud);
+                  modelsRef.current.clouds.push(cloud);
+                }
+              );
+            } catch (err) {
+              console.error('Failed to load random cloud:', err);
+              cloud = getModelFallback('cloud')();
+              cloud.position.set(
+                100,
+                3.5 + Math.random() * 7, // Giảm 30%: y từ 3.5 đến 10.5
+                -60 + Math.random() * 40
+              );
+              const scale = 3 + Math.random() * 3.5;
+              cloud.scale.set(scale, scale, scale);
+              sceneRef.current.add(cloud);
+              modelsRef.current.clouds.push(cloud);
             }
           }
+          if (modelsRef.current.clouds.length > 12) {
+            const oldCloud = modelsRef.current.clouds.shift();
+            returnCloudToPool(oldCloud);
+          }
         }
-      }, 5000 + Math.random() * 5000);
+      }, 10000 + Math.random() * 10000);
     }
 
     const createWeatherParticles = () => {
       if (currentTimeOfDay === 'night') {
         createParticles('star', 100, 0xffffff, 0.1, 0);
-      }
-      if (condition.includes('rain') || (condition.includes('cloud') && precipitationProbability > 60)) {
-        const rainCount = condition.includes('shower') ? 1000 : 500;
-        createParticles('rain', rainCount, 0x9999ff, 0.08, -0.2, -0.05);
-        if (rainCount > 800) {
-          createParticles('splash', 200, 0x77aaff, 0.05, 0, 0, 0);
-          modelsRef.current.raindrops = [];
-          for (let i = 0; i < 20; i++) {
-            try {
-              loader.load(
-                MODEL_PATHS.RAIN_DROP,
-                (gltf) => {
-                  const raindrop = gltf.scene;
-                  raindrop.position.set(
-                    (Math.random() - 0.5) * 20,
-                    Math.random() * 10,
-                    -55 + Math.random() * 30 // Random z từ -55 đến -25
-                  );
-                  raindrop.scale.set(0.1, 0.1, 0.1);
-                  scene.add(raindrop);
-                  if (!Array.isArray(modelsRef.current.raindrops)) {
-                    modelsRef.current.raindrops = [];
-                  }
-                  modelsRef.current.raindrops.push({
-                    model: raindrop,
-                    velocity: 0.1 + Math.random() * 0.2,
-                    startY: raindrop.position.y,
-                    startZ: raindrop.position.z // Lưu z ban đầu
-                  });
-                },
-                undefined,
-                (error) => {
-                  console.error('Error loading raindrop model:', error);
-                  setLoadError('Failed to load raindrop model');
-                  const raindrop = getModelFallback('raindrop')();
-                  raindrop.position.set(
-                    (Math.random() - 0.5) * 20,
-                    Math.random() * 10,
-                    -55 + Math.random() * 30 // Random z từ -55 đến -25
-                  );
-                  scene.add(raindrop);
-                  if (!Array.isArray(modelsRef.current.raindrops)) {
-                    modelsRef.current.raindrops = [];
-                  }
-                  modelsRef.current.raindrops.push({
-                    model: raindrop,
-                    velocity: 0.1 + Math.random() * 0.2,
-                    startY: raindrop.position.y,
-                    startZ: raindrop.position.z // Lưu z ban đầu
-                  });
-                }
-              );
-            } catch (err) {
-              console.error('Failed to load raindrop model:', err);
-              setLoadError('Failed to load raindrop model');
-              const raindrop = getModelFallback('raindrop')();
-              raindrop.position.set(
-                (Math.random() - 0.5) * 20,
-                Math.random() * 10,
-                -55 + Math.random() * 30 // Random z từ -55 đến -25
-              );
-              scene.add(raindrop);
-              if (!Array.isArray(modelsRef.current.raindrops)) {
-                modelsRef.current.raindrops = [];
-              }
-              modelsRef.current.raindrops.push({
-                model: raindrop,
-                velocity: 0.1 + Math.random() * 0.2,
-                startY: raindrop.position.y,
-                startZ: raindrop.position.z // Lưu z ban đầu
-              });
-            }
-          }
-        }
-      }
-      if (condition.includes('snow')) {
-        createParticles('snow', 800, 0xffffff, 0.1, -0.03, 0.01);
-        modelsRef.current.snowflakes = [];
-        for (let i = 0; i < 20; i++) {
-          try {
-            loader.load(
-              MODEL_PATHS.SNOWFLAKE,
-              (gltf) => {
-                const snowflake = gltf.scene;
-                snowflake.position.set(
-                  (Math.random() - 0.5) * 20,
-                  Math.random() * 10,
-                  -55 + Math.random() * 30 // Random z từ -55 đến -25
-                );
-                snowflake.scale.set(0.1, 0.1, 0.1);
-                snowflake.rotation.x = Math.random() * Math.PI;
-                snowflake.rotation.y = Math.random() * Math.PI;
-                scene.add(snowflake);
-                if (!Array.isArray(modelsRef.current.snowflakes)) {
-                  modelsRef.current.snowflakes = [];
-                }
-                modelsRef.current.snowflakes.push({
-                  model: snowflake,
-                  velocity: 0.01 + Math.random() * 0.03,
-                  rotationSpeed: {
-                    x: (Math.random() - 0.5) * 0.01,
-                    y: (Math.random() - 0.5) * 0.01,
-                    z: (Math.random() - 0.5) * 0.01,
-                  },
-                  startY: snowflake.position.y,
-                  startZ: snowflake.position.z // Lưu z ban đầu
-                });
-              },
-              undefined,
-              (error) => {
-                console.error('Error loading snowflake model:', error);
-                setLoadError('Failed to load snowflake model');
-                const snowflake = getModelFallback('snowflake')();
-                snowflake.position.set(
-                  (Math.random() - 0.5) * 20,
-                  Math.random() * 10,
-                  -55 + Math.random() * 30 // Random z từ -55 đến -25
-                );
-                snowflake.rotation.x = Math.random() * Math.PI;
-                snowflake.rotation.y = Math.random() * Math.PI;
-                scene.add(snowflake);
-                if (!Array.isArray(modelsRef.current.snowflakes)) {
-                  modelsRef.current.snowflakes = [];
-                }
-                modelsRef.current.snowflakes.push({
-                  model: snowflake,
-                  velocity: 0.01 + Math.random() * 0.03,
-                  rotationSpeed: {
-                    x: (Math.random() - 0.5) * 0.01,
-                    y: (Math.random() - 0.5) * 0.01,
-                    z: (Math.random() - 0.5) * 0.01,
-                  },
-                  startY: snowflake.position.y,
-                  startZ: snowflake.position.z // Lưu z ban đầu
-                });
-              }
-            );
-          } catch (err) {
-            console.error('Failed to load snowflake model:', err);
-            setLoadError('Failed to load snowflake model');
-            const snowflake = getModelFallback('snowflake')();
-            snowflake.position.set(
-              (Math.random() - 0.5) * 20,
-              Math.random() * 10,
-              -55 + Math.random() * 30 // Random z từ -55 đến -25
-            );
-            snowflake.rotation.x = Math.random() * Math.PI;
-            snowflake.rotation.y = Math.random() * Math.PI;
-            scene.add(snowflake);
-            if (!Array.isArray(modelsRef.current.snowflakes)) {
-              modelsRef.current.snowflakes = [];
-            }
-            modelsRef.current.snowflakes.push({
-              model: snowflake,
-              velocity: 0.01 + Math.random() * 0.03,
-              rotationSpeed: {
-                x: (Math.random() - 0.5) * 0.01,
-                y: (Math.random() - 0.5) * 0.01,
-                z: (Math.random() - 0.5) * 0.01,
-              },
-              startY: snowflake.position.y,
-              startZ: snowflake.position.z // Lưu z ban đầu
-            });
-          }
-        }
       }
     };
 
@@ -954,15 +772,15 @@ const WeatherEffect = ({
       const frustumSize = 45;
       const width = frustumSize * aspect * 4;
       const height = 30;
-      const depth = 30; // Tăng depth để phù hợp với phạm vi z từ -55 đến -25
+      const depth = 30;
 
       for (let i = 0; i < count; i++) {
         positions[i * 3] = Math.random() * width - width / 2;
         positions[i * 3 + 1] = Math.random() * height - 10;
-        positions[i * 3 + 2] = (type === 'star' || type === 'glow') ? -50 : -55 + Math.random() * 30; // Random z từ -55 đến -25, trừ stars/glow
+        positions[i * 3 + 2] = (type === 'star' || type === 'glow') ? -50 : -55 + Math.random() * 30;
         velocities[i * 3] = velocityX + (Math.random() - 0.5) * 0.02;
         velocities[i * 3 + 1] = velocityY - Math.random() * 0.01;
-        velocities[i * 3 + 2] = 0; // Không thay đổi z trong quá trình di chuyển
+        velocities[i * 3 + 2] = 0;
         opacities[i] = 0.3 + Math.random() * 0.7;
       }
 
@@ -1000,17 +818,17 @@ const WeatherEffect = ({
       if (cloudInterval) {
         clearInterval(cloudInterval);
       }
+      cloudPoolRef.current = [];
     };
   }, [weatherCondition, precipitationProbability, getTimeOfDay, getModelFallback, createCircleTexture]);
 
-  const updateParticles = useCallback(() => {
-    const now = performance.now();
-    if (particlesRef.current.lastUpdate && now - particlesRef.current.lastUpdate < 16) return;
-    particlesRef.current.lastUpdate = now;
+  const updateParticles = useCallback((timestamp) => {
+    if (particlesRef.current.lastUpdate && timestamp - particlesRef.current.lastUpdate < 16) return;
+    particlesRef.current.lastUpdate = timestamp;
 
     Object.keys(particlesRef.current).forEach((type) => {
       if (type === 'lastUpdate') return;
-      const { particles, velocities, width, height, depth } = particlesRef.current[type];
+      const { particles, velocities, width, height } = particlesRef.current[type];
 
       if (!particles || !particles.geometry || !particles.geometry.attributes.position) return;
 
@@ -1019,11 +837,9 @@ const WeatherEffect = ({
       for (let i = 0; i < positions.length; i += 3) {
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
-        // Không cập nhật positions[i + 2] để giữ z cố định
 
         if (positions[i] < -width / 2) positions[i] = width / 2;
         if (positions[i] > width / 2) positions[i] = -width / 2;
-
         if (positions[i + 1] < -10) positions[i + 1] = height - 10;
         if (positions[i + 1] > height - 10) positions[i + 1] = -10;
       }
@@ -1033,47 +849,30 @@ const WeatherEffect = ({
   }, []);
 
   const updateModels = useCallback(() => {
-    if (modelsRef.current.clouds) {
-      modelsRef.current.clouds.forEach((cloud) => {
-        cloud.position.x -= 0.02;
-        if (cloud.position.x < -100) {
-          cloud.position.x = 100;
-          cloud.position.z = -60 + Math.random() * 40; // Random z khi tái sử dụng
-        }
-        cloud.position.y += Math.sin(Date.now() * 0.0005) * 0.005;
-      });
-    }
-    if (modelsRef.current.raindrops) {
-      modelsRef.current.raindrops.forEach((raindrop) => {
-        raindrop.model.position.y -= raindrop.velocity;
-        if (raindrop.model.position.y < -22.5) {
-          raindrop.model.position.y = raindrop.startY;
-          raindrop.model.position.x = (Math.random() - 0.5) * 20;
-          raindrop.model.position.z = raindrop.startZ;
-        }
-      });
-    }
-    if (modelsRef.current.snowflakes) {
-      modelsRef.current.snowflakes.forEach((snowflake) => {
-        snowflake.model.position.y -= snowflake.velocity;
-        snowflake.model.position.x += Math.sin(Date.now() * 0.001) * 0.01;
-        snowflake.model.rotation.x += snowflake.rotationSpeed.x;
-        snowflake.model.rotation.y += snowflake.rotationSpeed.y;
-        snowflake.model.rotation.z += snowflake.rotationSpeed.z;
-        if (snowflake.model.position.y < -22.5) {
-          snowflake.model.position.y = snowflake.startY;
-          snowflake.model.position.x = (Math.random() - 0.5) * 20;
-          snowflake.model.position.z = snowflake.startZ; // Giữ z ban đầu
-        }
-      });
+    if (modelsRef.current.clouds && modelsRef.current.lastCloudUpdate) {
+      const now = Date.now();
+      if (now - modelsRef.current.lastCloudUpdate > 50) {
+        modelsRef.current.lastCloudUpdate = now;
+        const sinValue = Math.sin(now * 0.0003);
+
+        modelsRef.current.clouds.forEach((cloud) => {
+          cloud.position.x -= 0.05;
+          if (cloud.position.x < -100) {
+            cloud.position.x = 100;
+            cloud.position.z = -60 + Math.random() * 40;
+          }
+          cloud.position.y += sinValue * 0.005;
+        });
+      }
+    } else {
+      modelsRef.current.lastCloudUpdate = Date.now();
     }
   }, []);
 
   return (
     <div
-      ref={mountRef}
       style={{
-        width: '100%', // Changed from fixed px to 100%
+        width: '100%',
         height: '360px',
         position: 'relative',
         overflow: 'hidden',
@@ -1081,11 +880,43 @@ const WeatherEffect = ({
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
       }}
     >
-      {loadError && (
-        <div style={{ position: 'absolute', color: 'red', padding: '10px', zIndex: 10 }}>
-          Error: {loadError}. Using fallback models.
-        </div>
-      )}
+      <div
+        ref={mountRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 1,
+        }}
+      >
+        {loadError && (
+          <div style={{ position: 'absolute', color: 'red', padding: '10px', zIndex: 10 }}>
+            Error: {loadError}. Using fallback models.
+          </div>
+        )}
+      </div>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 2,
+          pointerEvents: 'none',
+        }}
+      >
+        <WeatherOverlay
+          weatherCondition={weatherCondition}
+          precipitationProbability={precipitationProbability}
+          rainSize={0.5}
+          snowSize={0.15}
+          rainAngle={30}
+          snowAngle={15}
+        />
+      </div>
     </div>
   );
 };
