@@ -137,7 +137,7 @@ const Home = () => {
   return (
     <div className="container mx-auto h-full">
       <section className={clsx(style.banner, 'w-full py-2.5')}>
-        {weather && weather.current && (
+        {weather && (
           <div
             className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative"
             style={{ background: getBgColor(weather.current.weather[0].icon) }}
@@ -178,7 +178,7 @@ const Home = () => {
             <div className="grid grid-cols-5 grid-rows-1 gap-4">
               {/* Main weather info */}
               <div className="col-span-5 row-span-2 shadow-md bg-white rounded-lg text-black p-4">
-                {weather && weather.current && (
+                {weather && (
                   <>
                     <h2 className="text-2xl font-bold">
                       {weather.cityInfo?.local_names?.vi || weather.cityInfo?.name || 'Unknown Location'}
@@ -193,7 +193,7 @@ const Home = () => {
               {/* Feels like */}
               <div className="row-start-3 shadow-md bg-white rounded-lg p-4 text-center">
                 <ThermometerSun className="text-amber-400 w-full" />
-                {weather && weather.current && (
+                {weather && (
                   <div className="text-black">
                     <p>Cảm Giác Như</p>
                     <h2 className="text-2xl font-bold">{weather.current.feels_like.toFixed(1)}°C</h2>
@@ -203,7 +203,7 @@ const Home = () => {
               {/* Wind */}
               <div className="row-start-3 shadow-md bg-white rounded-lg p-4 text-center">
                 <Wind className="text-blue-400 w-full" />
-                {weather && weather.current && (
+                {weather && (
                   <div className="text-black">
                     <p>Gió</p>
                     <h2 className="text-2xl font-bold">{(weather.current.wind_speed * 3.6).toFixed(1)} km/h</h2>
@@ -213,7 +213,7 @@ const Home = () => {
               {/* Humidity */}
               <div className="row-start-3 shadow-md bg-white rounded-lg p-4 text-center">
                 <Droplets className="text-amber-400 w-full" />
-                {weather && weather.current && (
+                {weather && (
                   <div className="text-black">
                     <p>Độ Ẩm</p>
                     <h2 className="text-2xl font-bold">{weather.current.humidity}%</h2>
@@ -222,7 +222,7 @@ const Home = () => {
               </div>
               {/* Sunrise, Sunset */}
               <div className="row-start-3 col-span-2 shadow-md bg-white rounded-lg p-4 text-center">
-                {weather && weather.current && (
+                {weather && (
                   <div className="text-black flex justify-between h-full relative">
                     <span className="mt-auto ml-3">
                       <Sunrise className="text-amber-300 w-full" />
@@ -279,7 +279,7 @@ const Home = () => {
                             : getWeekdayName(element.dt)}
                         </div>
                         <div className="flex items-center justify-start">
-                          <WeatherIcon iconCode={element?.weather[0]?.icon} size={62} />
+                          <WeatherIcon iconCode={element.weather[0].icon} size={62} />
                           {element.pop && `${(element.pop * 100).toFixed(0)}%`}
                         </div>
                         <div className="grid grid-cols-3 items-center w-full gap-2">
