@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { fetchWeatherByCity } from '@/api/weather';
 import { normalizeCityKey } from '@/utils/normalizeCityKey';
+import WeatherIcon from '@/components/WeatherIcon';
 
 const Index = ({ onSelectCity }) => {
     const [recentCitiesWeather, setRecentCitiesWeather] = useState([]);
@@ -67,7 +68,7 @@ const Index = ({ onSelectCity }) => {
                     className="col-span-2 flex justify-between p-3 rounded-2xl hover:bg-gray-100"
                 >
                     <span className="text-[18px] font-bold">{city}</span>
-                    <span>{weather ? `${(weather.current.temp).toFixed(1)}°C` : '--'}</span>
+                    <span className='flex items-center'><WeatherIcon iconCode={weather.current.weather[0].icon} size={32}/>{weather ? `${(weather.current.temp).toFixed(1)}°C` : '--'}</span>
                 </div>
             ))}
         </div>
