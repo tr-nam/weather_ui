@@ -61,14 +61,14 @@ const Index = ({ onSelectCity }) => {
         <div className="col-span-2 row-span-3 gap-2 shadow-md bg-white rounded-lg text-black p-4">
             <div className="col-span-2 text-[20px] font-bold">Xem Gần Đây</div>
 
-            {recentCitiesWeather.map(({ city, weather }, index) => (
+            {weather && recentCitiesWeather.map(({ city, weather }, index) => (
                 <div
                     key={index}
                     onClick={() => onSelectCity(city)}
                     className="col-span-2 flex justify-between p-3 rounded-2xl hover:bg-gray-100"
                 >
                     <span className="text-[18px] font-bold">{city}</span>
-                    <span className='flex items-center'><WeatherIcon iconCode={weather.current.weather[0].icon} size={32}/>{weather ? `${(weather.current.temp).toFixed(1)}°C` : '--'}</span>
+                    <span className='flex items-center'><WeatherIcon iconCode={weather?.current?.weather[0]?.icon} size={32}/>{weather ? `${(weather?.current?.temp).toFixed(1)}°C` : '--'}</span>
                 </div>
             ))}
         </div>
