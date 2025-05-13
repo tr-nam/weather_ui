@@ -116,11 +116,7 @@ const Home = () => {
           className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative"
           style={{ background: getBgColor(weather.current.weather[0].icon) }}
         >
-          <WeatherEffect
-            weatherCondition="cloud"
-            precipitationProbability={100}
-            timeOfDay="day"
-          />
+          <WeatherEffect weatherCondition="sunny" precipitationProbability={100} timeOfDay="day" />
         </div>}
       </section>
       <section className={clsx(style.content)}>

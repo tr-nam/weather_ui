@@ -1,18 +1,20 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // Đường dẫn đến mô hình 3D
-const SUN_MODEL = '/models/sun/scene.gltf';
-const CLOUD_MODEL = '/models/cloud/scene.gltf';
-const RAIN_DROP_MODEL = '/models/rain/scene.gltf';
-const SNOWFLAKE_MODEL = '/models/snowflake/scene.gltf';
-const MOUNTAIN_MODEL = '/models/mountain/scene.gltf';
-
+const MODEL_PATHS = {
+  SUN: '/models/sun/scene.gltf',
+  CLOUD: '/models/cloud/scene.gltf',
+  RAIN_DROP: '/models/rain/scene.gltf',
+  SNOWFLAKE: '/models/snowflake/scene.gltf',
+  MOUNTAIN: '/models/mountain/scene.gltf'
+};
 /**
  * Component hiệu ứng thời tiết 3D với background được cải thiện
  * @param {Object} props
@@ -20,7 +22,14 @@ const MOUNTAIN_MODEL = '/models/mountain/scene.gltf';
  * @param {number} [props.precipitationProbability] - Xác suất mưa/tuyết (0-100)
  * @param {string} [props.timeOfDay] - Thời điểm trong ngày
  */
-const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }) => {
+const WeatherEffect = ({
+  weatherCondition = 'clear',
+  precipitationProbability = 0,
+  timeOfDay = 'auto'
+}) => {
+
+
+
   const mountRef = useRef(null);
   const particlesRef = useRef({ lastUpdate: 0 });
   const modelsRef = useRef({ clouds: [] });
@@ -53,8 +62,8 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
   }, []);
 
   // Trích xuất thời điểm trong ngày
-  const getTimeOfDay = useCallback(() => {
-    if (timeOfDay) return timeOfDay;
+  const getTimeOfDay = useMemo(() => {
+    if (timeOfDay && timeOfDay !== 'auto') return timeOfDay;
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 10) return 'dawn';
     if (hour >= 10 && hour < 17) return 'day';
@@ -65,7 +74,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
   // Tạo phương thức để chuyển đổi mô hình dự trữ
   const getModelFallback = useCallback(
     (type) => {
-      const currentTimeOfDay = getTimeOfDay();
+      const currentTimeOfDay = getTimeOfDay;
       switch (type) {
         case 'sun':
           return () => {
@@ -169,6 +178,13 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
     [getTimeOfDay, weatherCondition]
   );
 
+  const onModelLoadError = useCallback((modelType, error) => {
+    console.error(`Error loading ${modelType} model:`, error);
+    setLoadError(`Failed to load ${modelType} model`);
+    const fallbackModel = getModelFallback(modelType)();
+    return fallbackModel;
+  }, [getModelFallback]);
+
   // Thiết lập ban đầu
   useEffect(() => {
     if (!mountRef.current || initCompletedRef.current) return;
@@ -218,10 +234,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
     controls.target.set(0, 0, 0);
     controls.enableRotate = true;
     controls.enablePan = false;
-    controls.enableZoom = true;
-    controls.zoomSpeed = 0.5;
-    controls.minZoom = 1;
-    controls.maxZoom = 2;
+    controls.enableZoom = false;
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minPolarAngle = Math.PI / 4;
@@ -248,7 +261,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
     const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
     scene.add(ambientLight);
 
-    const currentTimeOfDay = getTimeOfDay();
+    const currentTimeOfDay = getTimeOfDay;
     const dirLight = new THREE.DirectionalLight(
       currentTimeOfDay === 'night' ? 0x2233aa : 0xffffcc,
       currentTimeOfDay === 'night' ? 0.3 : 1.2
@@ -269,13 +282,13 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       scene.fog = new THREE.FogExp2(0x001133, 0.035);
     }
 
-    const setBackgroundColor = () => {
+    const setBackgroundColor = (scene) => {
       const canvas = document.createElement('canvas');
       canvas.width = 128;
       canvas.height = 128;
       const context = canvas.getContext('2d');
       const gradient = context.createLinearGradient(0, 128, 0, 0);
-      const time = getTimeOfDay();
+      const time = getTimeOfDay;
       const condition = (weatherCondition || '').toLowerCase();
       let bottomColor, topColor;
 
@@ -304,7 +317,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       scene.background = texture;
     };
 
-    setBackgroundColor();
+    setBackgroundColor(scene);
 
     const loader = new GLTFLoader();
 
@@ -312,7 +325,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       if (mountainLoadedRef.current) return;
       try {
         loader.load(
-          MOUNTAIN_MODEL,
+          MODEL_PATHS.MOUNTAIN,
           (gltf) => {
             const mountain = gltf.scene;
             mountain.position.set(0, -40, -50); // Giữ z = -50
@@ -454,7 +467,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
 
   const updateSunPosition = useCallback(() => {
     if (!modelsRef.current.sun) return;
-    const currentTime = getTimeOfDay();
+    const currentTime = getTimeOfDay;
     const sun = modelsRef.current.sun;
     const timeInSeconds = Date.now() * 0.0001;
 
@@ -483,11 +496,11 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
     console.log('Updating weather effects:', {
       condition: weatherCondition,
       probability: precipitationProbability,
-      timeOfDay: getTimeOfDay(),
+      timeOfDay: getTimeOfDay,
     });
 
     const scene = sceneRef.current;
-    const currentTimeOfDay = getTimeOfDay();
+    const currentTimeOfDay = getTimeOfDay;
     const condition = (weatherCondition || '').toLowerCase();
 
     Object.keys(particlesRef.current).forEach((key) => {
@@ -533,13 +546,13 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       modelsRef.current.sun = null;
     }
 
-    const setBackgroundColor = () => {
+    const setBackgroundColor = (scene) => {
       const canvas = document.createElement('canvas');
       canvas.width = 128;
       canvas.height = 128;
       const context = canvas.getContext('2d');
       const gradient = context.createLinearGradient(0, 128, 0, 0);
-      const time = getTimeOfDay();
+      const time = getTimeOfDay;
       const condition = (weatherCondition || '').toLowerCase();
       let bottomColor, topColor;
 
@@ -568,7 +581,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       scene.background = texture;
     };
 
-    setBackgroundColor();
+    setBackgroundColor(scene);
 
     if (scene.fog) {
       scene.fog = null;
@@ -596,7 +609,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       if (currentTimeOfDay === 'day' || currentTimeOfDay === 'dawn' || currentTimeOfDay === 'dusk') {
         try {
           loader.load(
-            SUN_MODEL,
+            MODEL_PATHS.SUN,
             (gltf) => {
               const sun = gltf.scene;
               sun.scale.set(0.3, 0.3, 0.3);
@@ -636,7 +649,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
         for (let i = 0; i < cloudCount; i++) {
           try {
             loader.load(
-              CLOUD_MODEL,
+              MODEL_PATHS.CLOUD,
               (gltf) => {
                 const cloud = gltf.scene;
                 cloud.position.set(
@@ -703,7 +716,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
         if (sceneRef.current && modelsRef.current.clouds.length < 20) {
           try {
             loader.load(
-              CLOUD_MODEL,
+              MODEL_PATHS.CLOUD,
               (gltf) => {
                 const cloud = gltf.scene;
                 cloud.position.set(
@@ -773,7 +786,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
           for (let i = 0; i < 20; i++) {
             try {
               loader.load(
-                RAIN_DROP_MODEL,
+                MODEL_PATHS.RAIN_DROP,
                 (gltf) => {
                   const raindrop = gltf.scene;
                   raindrop.position.set(
@@ -844,7 +857,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
         for (let i = 0; i < 20; i++) {
           try {
             loader.load(
-              SNOWFLAKE_MODEL,
+              MODEL_PATHS.SNOWFLAKE,
               (gltf) => {
                 const snowflake = gltf.scene;
                 snowflake.position.set(
@@ -1060,7 +1073,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
     <div
       ref={mountRef}
       style={{
-        width: '1536px',
+        width: '100%', // Changed from fixed px to 100%
         height: '360px',
         position: 'relative',
         overflow: 'hidden',
@@ -1069,7 +1082,7 @@ const WeatherEffect = ({ weatherCondition, precipitationProbability, timeOfDay }
       }}
     >
       {loadError && (
-        <div style={{ position: 'absolute', color: 'red', padding: '10px' }}>
+        <div style={{ position: 'absolute', color: 'red', padding: '10px', zIndex: 10 }}>
           Error: {loadError}. Using fallback models.
         </div>
       )}
