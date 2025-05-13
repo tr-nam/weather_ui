@@ -61,7 +61,7 @@ const Index = ({ onSelectCity }) => {
         <div className="col-span-2 row-span-3 gap-2 shadow-md bg-white rounded-lg text-black p-4">
             <div className="col-span-2 text-[20px] font-bold">Xem Gần Đây</div>
 
-            {weather && recentCitiesWeather.map(({ city, weather }, index) => (
+            {recentCitiesWeather.map(({ city, weather }, index) => (
                 <div
                     key={index}
                     onClick={() => onSelectCity(city)}
