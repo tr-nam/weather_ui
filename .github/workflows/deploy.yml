@@ -24,4 +24,4 @@ jobs:
           docker build -t weather_ui .
           docker stop weather_ui_container || true
           docker rm weather_ui_container || true
-          docker run -d --name weather_ui_container -p 3000:80 weather_ui
+          docker run -d --name weather_ui_container -p 7999:80 weather_ui
