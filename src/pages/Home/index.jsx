@@ -108,6 +108,10 @@ const Home = () => {
     setCity(e.target.value);
   };
 
+  const [reRender, setReRender] = useState(false);
+  useEffect(()=>{
+
+  }, [])
 
   return (
     <div className="container mx-auto h-full">
@@ -116,7 +120,7 @@ const Home = () => {
           className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative"
           style={{ background: getBgColor(weather.current.weather[0].icon) }}
         >
-          <WeatherEffect weatherCondition="sunny" precipitationProbability={100} timeOfDay="day" />
+          {reRender && <WeatherEffect weatherCondition="sunny" precipitationProbability={100} timeOfDay="day" />}
         </div>}
       </section>
       <section className={clsx(style.content)}>
