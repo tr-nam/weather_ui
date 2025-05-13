@@ -8,11 +8,10 @@ const iconAnimatedMap = {};
 for (const path in icons) {
   const fileName = path.split('/').pop(); // ví dụ: cloudy-day-1.svg
   const nameWithoutExt = fileName.replace('.svg', ''); // cloudy-day-1
-  iconAnimatedMap[nameWithoutExt] = `src/assets/weather-icons/animated/${fileName}`;
+  iconAnimatedMap[nameWithoutExt] = icons[path]; // ✅ chính xác!
 }
 
 export const getAnimatedIconUrl = (iconCode) => {
-  // ánh xạ iconCode từ API sang tên file
   const fileNameMap = {
     '01d': 'day',
     '01n': 'night',
@@ -30,10 +29,12 @@ export const getAnimatedIconUrl = (iconCode) => {
     '11n': 'thunder',
     '13d': 'snowy-3',
     '13n': 'snowy-7',
-    '50d': 'mist',
-    '50n': 'mist',
+    '50d': 'weather_sagittarius', // giả định thay vì 'mist'
+    '50n': 'weather_sagittarius',
   };
 
   const name = fileNameMap[iconCode];
-  return name && iconAnimatedMap[name] ? iconAnimatedMap[name] : iconAnimatedMap['weather']; // fallback
+  return name && iconAnimatedMap[name]
+    ? iconAnimatedMap[name]
+    : iconAnimatedMap['weather']; // fallback icon
 };

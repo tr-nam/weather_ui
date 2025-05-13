@@ -106,3 +106,27 @@ export const fetchWeatherByCity = async (city, countryCode = '') => {
   const coords = await getCoordinatesByCity(city, countryCode);
   return fetchWeatherByCoord(coords);
 };
+
+// Lấy tọa độ thiết bị
+export const getDeviceLocation = async () => {
+  if (!('geolocation' in navigator)) {
+    throw new Error('Trình duyệt không hỗ trợ định vị');
+  }
+
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        resolve({ latitude, longitude });
+      },
+      (error) => {
+        reject(new Error('Không thể lấy vị trí: ' + error.message));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
+  });
+};
+

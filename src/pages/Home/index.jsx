@@ -11,10 +11,13 @@ import style from './style.module.css';
 import { formatTime } from '@/utils/timeUtils';
 import { getWeekdayName } from '@/utils/dayUtils';
 import { normalizeCityKey } from '@/utils/normalizeCityKey';
+import { getBgColor } from '@/utils/bgColorUtils';
 import { fetchWeatherByCity } from '@/api/weather';
 import WeatherIcon from '@/components/WeatherIcon';
 import SunTimeChart from '@/components/SunTimeChart';
 import CitiesWeather from '@/components/CitiesWeather';
+import TemperatureSlider from '@/components/TemperatureSlider';
+import WeatherEffect from '@/components/WeatherEffect';
 
 const Home = () => {
   const [city, setCity] = useState('Can Tho');
@@ -109,9 +112,16 @@ const Home = () => {
   return (
     <div className="container mx-auto h-full">
       <section className={clsx(style.banner, 'w-full py-2.5')}>
-        <div className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative">
-
-        </div>
+        {weather && <div
+          className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative"
+          style={{ background: getBgColor(weather.current.weather[0].icon) }}
+        >
+          <WeatherEffect
+            weatherCondition="cloud"
+            precipitationProbability={100}
+            timeOfDay="day"
+          />
+        </div>}
       </section>
       <section className={clsx(style.content)}>
         {isLoading && (
@@ -208,14 +218,14 @@ const Home = () => {
               </div>
               {/* Daily Forecast */}
               <div className="col-span-5 row-span-1 row-start-5 shadow-md bg-white rounded-lg p-4">
-                <div className="grid grid-cols-5 grid-rows-8 gap-1 text-black">
+                <div className="grid grid-cols-3 grid-rows-8 gap-1 text-black">
                   <div className="col-span-5 text-[20px] font-bold">
                     7 Ngày Tới
                   </div>
 
                   {weather?.daily.slice(0, 7).map((element, index) => (
                     <div key={index} className="col-span-5 px-2.5">
-                      <div className="grid grid-cols-4 grid-rows-1 min-h-14">
+                      <div className="grid grid-cols-3 grid-rows-1 min-h-14">
                         <div className='flex items-center justify-start'>
                           {new Date(element.dt * 1000).getDay() === new Date().getDay() ? 'Hôm Nay' : getWeekdayName(element.dt)}
                         </div>
@@ -223,12 +233,12 @@ const Home = () => {
                           <WeatherIcon iconCode={element.weather[0].icon} size={62} />
                           {element?.rain && (element?.pop * 100).toFixed(0) + '%'}
                         </div>
-                        <div className='flex items-center justify-start'>
-                          T:{element.temp.min.toFixed(1)}°C
-
-                          C:{element.temp.max.toFixed(1)}°C
+                        <div className="grid grid-cols-3 items-center w-full gap-2">
+                          <div className="text-center font-bold text-sm">T: {element.temp.min.toFixed(1)}°C</div>
+                          <TemperatureSlider min={element.temp.min} max={element.temp.max} value={element.temp.day} />
+                          <div className="text-center font-bold text-sm">C: {element.temp.max.toFixed(1)}°C</div>
                         </div>
-                        <div className='flex items-center justify-start'>4</div>
+
                       </div>
                     </div>
                   ))}
@@ -238,13 +248,13 @@ const Home = () => {
           </div>
           <div className="col-span-2 row-span-5 col-start-4 ">
             <div className="grid grid-cols-2 grid-rows-5 gap-4">
-              <CitiesWeather onSelectCity={(selectedCity) => setCity(selectedCity)}/>
+              <CitiesWeather onSelectCity={(selectedCity) => setCity(selectedCity)} />
               <div className="col-span-2 row-span-2 row-start-4 shadow-md bg-white rounded-lg"></div>
             </div>
           </div>
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   );
 };
 
