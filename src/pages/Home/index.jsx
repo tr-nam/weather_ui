@@ -279,7 +279,7 @@ const Home = () => {
                             : getWeekdayName(element.dt)}
                         </div>
                         <div className="flex items-center justify-start">
-                          <WeatherIcon iconCode={element.weather[0].icon} size={62} />
+                          <WeatherIcon iconCode={element?.weather[0]?.icon} size={62} />
                           {element.pop && `${(element.pop * 100).toFixed(0)}%`}
                         </div>
                         <div className="grid grid-cols-3 items-center w-full gap-2">
