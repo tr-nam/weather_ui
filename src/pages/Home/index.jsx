@@ -246,7 +246,7 @@ const Home = () => {
                   <div className="col-span-9 text-[20px] font-bold">
                     Dự báo theo giờ
                   </div>
-                  {weather && weather?.hourly?.slice(0, 10).map((element, index) => (
+                  {weather?.hourly?.slice(0, 10).map((element, index) => (
                     <div
                       key={index}
                       className="row-span-2 row-start-2 flex flex-col items-center justify-between px-2 py-4 rounded-lg hover:shadow-md hover:-translate-y-1"
@@ -270,7 +270,7 @@ const Home = () => {
                   <div className="col-span-5 text-[20px] font-bold">
                     7 Ngày Tới
                   </div>
-                  {weather && weather?.daily?.slice(0, 7).map((element, index) => (
+                  {weather?.daily?.slice(0, 7).map((element, index) => (
                     <div key={index} className="col-span-5 px-2.5">
                       <div className="grid grid-cols-3 grid-rows-1 min-h-14">
                         <div className="flex items-center justify-start">
