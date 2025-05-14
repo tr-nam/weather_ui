@@ -8,21 +8,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy using ssh
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        port: 22
-        script: |
-          cd project/weather_ui
-          git fetch origin
-          git checkout production
-          git pull
-          echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" > .env
-          echo "VITE_MAPBOX_API_KEY=${{ secrets.VITE_MAPBOX_API_KEY }}" >> .env
-          docker build -t weather_ui .
-          docker stop weather_ui_container || true
-          docker rm weather_ui_container || true
-          docker run -d --name weather_ui_container -p 7999:80 weather_ui
+      - name: Deploy using ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          script: |
+            cd project/weather_ui
+            git fetch origin
+            git checkout production
+            git pull
+
+            echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" > .env
+            echo "VITE_MAPBOX_API_KEY=${{ secrets.VITE_MAPBOX_API_KEY }}" >> .env
+
+            docker build -t weather_ui:latest .
+
+            docker stop weather_ui_container || true
+            docker rm weather_ui_container || true
+
+            docker run -d --name weather_ui_container -p 7999:80 weather_ui:latest
+
+            # Dọn image <none> để tránh rác
+            docker image prune -f
