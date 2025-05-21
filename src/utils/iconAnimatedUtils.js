@@ -29,8 +29,8 @@ export const getAnimatedIconUrl = (iconCode) => {
     '11n': 'thunder',
     '13d': 'snowy-3',
     '13n': 'snowy-7',
-    '50d': 'weather_sagittarius', // giả định thay vì 'mist'
-    '50n': 'weather_sagittarius',
+    '50d': 'cloudy', // giả định thay vì 'mist'
+    '50n': 'cloudy',
   };
 
   const name = fileNameMap[iconCode];
