@@ -18,6 +18,7 @@ import SunTimeChart from '@/components/SunTimeChart';
 import CitiesWeather from '@/components/CitiesWeather';
 import TemperatureSlider from '@/components/TemperatureSlider';
 import WeatherEffect from '@/components/WeatherEffect';
+import WeatherBanner from '@/components/WeatherBanner';
 
 const Home = () => {
   const [city, setCity] = useState('');
@@ -142,9 +143,17 @@ const Home = () => {
             className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative"
             style={{ background: getBgColor(weather.current.weather[0].icon) }}
           >
-            <WeatherEffect
+            {/* <WeatherEffect
               weatherCondition={weather.current.weather[0].main.toLowerCase()}
               precipitationProbability={weather.current.clouds || 0}
+            /> */}
+            {/* <WeatherBanner weatherType={weather.current.weather[0].main.toLowerCase()} precipitationProbability={weather.current.clouds || 0}/> */}
+            <WeatherBanner
+              weatherCondition="rain"
+              precipitationProbability={100}
+              timeOfDay="day"
+              rainSize={0.5}
+              rainAngle={30}
             />
           </div>
         )}
