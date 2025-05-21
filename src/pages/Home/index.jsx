@@ -10,14 +10,12 @@ import clsx from 'clsx';
 import style from './style.module.css';
 import { formatTime } from '@/utils/timeUtils';
 import { getWeekdayName } from '@/utils/dayUtils';
-import { getBgColor } from '@/utils/bgColorUtils';
 import { normalizeCityKey } from '@/utils/normalizeCityKey';
 import { fetchWeatherByCity, fetchWeatherByCoord, getDeviceLocation } from '@/api/weather';
 import WeatherIcon from '@/components/WeatherIcon';
 import SunTimeChart from '@/components/SunTimeChart';
 import CitiesWeather from '@/components/CitiesWeather';
 import TemperatureSlider from '@/components/TemperatureSlider';
-import WeatherEffect from '@/components/WeatherEffect';
 import WeatherBanner from '@/components/WeatherBanner';
 
 const Home = () => {
@@ -140,35 +138,16 @@ const Home = () => {
       <section className={clsx(style.banner, 'w-full py-2.5')}>
         {weather && (
           <div
-            className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative"
-            style={{ background: getBgColor(weather.current.weather[0].icon) }}
-          >
-            {/* <WeatherEffect
-              weatherCondition={weather.current.weather[0].main.toLowerCase()}
-              precipitationProbability={weather.current.clouds || 0}
-            /> */}
-            {/* <WeatherBanner weatherType={weather.current.weather[0].main.toLowerCase()} precipitationProbability={weather.current.clouds || 0}/> */}
-            <WeatherBanner
+            className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative">
+            {/* <WeatherBanner
               weatherCondition={weather.current.weather[0].main.toLowerCase()}
               precipitationProbability={weather.current.clouds || 0}
               timeOfDay="auto"
-              rainSize={0.5}
-              rainAngle={30}
-            />
+            /> */}
           </div>
         )}
       </section>
       <section className={clsx(style.content)}>
-        {/* Input để nhập tên thành phố */}
-        <div className="mb-4">
-          <input
-            type="text"
-            value={city}
-            onChange={handleCityChange}
-            placeholder="Nhập tên thành phố"
-            className="border border-gray-300 rounded-lg p-2 w-full"
-          />
-        </div>
 
         {isLoading && (
           <div className="text-center">
