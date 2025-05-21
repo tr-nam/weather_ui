@@ -149,9 +149,9 @@ const Home = () => {
             /> */}
             {/* <WeatherBanner weatherType={weather.current.weather[0].main.toLowerCase()} precipitationProbability={weather.current.clouds || 0}/> */}
             <WeatherBanner
-              weatherCondition="rain"
-              precipitationProbability={100}
-              timeOfDay="day"
+              weatherCondition={weather.current.weather[0].main.toLowerCase()}
+              precipitationProbability={weather.current.clouds || 0}
+              timeOfDay="auto"
               rainSize={0.5}
               rainAngle={30}
             />
