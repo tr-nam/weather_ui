@@ -178,13 +178,24 @@ const DailyAdvice = ({ weather, aqi }) => {
         <div className="shadow-md bg-white rounded-lg p-4 text-black">
             <h2 className="text-xl font-bold mb-4">Lời Khuyên Hôm Nay</h2>
             <form onSubmit={handleActivitySubmit} className="mb-4 flex items-center gap-2">
-                <input
-                    type="text"
-                    value={userActivity}
-                    onChange={(e) => setUserActivity(e.target.value)}
-                    placeholder="Hoạt động hôm nay của bạn ? (VD: Chơi thể thao, Đi làm)"
-                    className="border border-gray-300 rounded-lg p-2 w-full"
-                />
+                <div className="relative w-full flex items-center">
+                    <input
+                        type="text"
+                        value={userActivity}
+                        onChange={(e) => setUserActivity(e.target.value)}
+                        placeholder="Hoạt động hôm nay của bạn? (VD: Chơi thể thao, Đi làm)"
+                        className="border border-gray-300 rounded-lg p-2 w-full"
+                    />
+                    {userActivity && (
+                        <button
+                            type="button"
+                            onClick={() => setUserActivity('')}
+                            className="absolute right-2 text-black font-bold bg-transparent p-2" 
+                        >
+                        x
+                        </button>
+                    )}
+                </div>
                 <button
                     type="submit"
                     className="bg-blue-300 text-white text-[0.9rem] text-nowrap rounded-lg px-4 py-2.5 hover:bg-blue-400"
