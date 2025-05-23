@@ -9,6 +9,7 @@ import {
 import clsx from 'clsx';
 import style from './style.module.css';
 import { formatTime } from '@/utils/timeUtils';
+import { formattedDate } from '@/utils/formattedDate';
 import { getWeekdayName } from '@/utils/dayUtils';
 import { normalizeCityKey } from '@/utils/normalizeCityKey';
 import { fetchWeatherByCity, fetchWeatherByCoord, getDeviceLocation } from '@/api/weather';
@@ -17,6 +18,8 @@ import SunTimeChart from '@/components/SunTimeChart';
 import CitiesWeather from '@/components/CitiesWeather';
 import TemperatureSlider from '@/components/TemperatureSlider';
 import WeatherBanner from '@/components/WeatherBanner';
+import AirPollution from '@/components/AirPollution';
+import AiAdvice from '@/components/AiAdvice';
 
 const Home = () => {
   const [city, setCity] = useState('');
@@ -65,7 +68,7 @@ const Home = () => {
 
       const cacheKey = dataSource.type === 'city'
         ? `weather_${normalizeCityKey(city)}`
-        : `weather_coord_${dataSource.value.lat}_${dataSource.value.lon}`;
+        : `weather_coord_${dataSource.value.lat.toFixed(3)}_${dataSource.value.lon.toFixed(3)}`;
 
       const cachedData = localStorage.getItem(cacheKey)
         ? JSON.parse(localStorage.getItem(cacheKey))
@@ -131,7 +134,6 @@ const Home = () => {
   const handleSelectCity = (selectedCity) => {
     setCity(selectedCity);
   };
-  weather && console.log(weather);
 
   return (
     <div className="container mx-auto h-full">
@@ -139,11 +141,11 @@ const Home = () => {
         {weather && (
           <div
             className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative">
-            {/* <WeatherBanner
+            <WeatherBanner
               weatherCondition={weather.current.weather[0].main.toLowerCase()}
               precipitationProbability={weather.current.clouds || 0}
-              timeOfDay="auto"
-            /> */}
+              timeOfDay={'auto'}
+            />
           </div>
         )}
       </section>
@@ -165,16 +167,20 @@ const Home = () => {
           <div className="col-span-3 row-span-5 mb-24">
             <div className="grid grid-cols-5 grid-rows-1 gap-4">
               {/* Main weather info */}
-              <div className="col-span-5 row-span-2 shadow-md bg-white rounded-lg text-black p-4">
+              <div className="col-span-5 row-span-2 shadow-md bg-white rounded-lg text-black p-4 py-6">
                 {weather && (
                   <>
-                    <h2 className="text-2xl font-bold">
-                      {weather.cityInfo?.local_names?.vi || weather.cityInfo?.name || 'Unknown Location'}
-                    </h2>
-                    <p className="text-3xl mt-2">{weather.current.temp.toFixed(1)}°C</p>
-                    <p className="capitalize">{weather.current.weather[0].description}</p>
-                    <p>Độ ẩm: {weather.current.humidity}%</p>
-                    <p>Gió: {(weather.current.wind_speed * 3.6).toFixed(1)} km/h</p>
+                    <p className='font-light text-gray-400'>Cập Nhật Lần Cuối: {formatTime(weather.current.dt)} - {formattedDate}</p>
+                    <div className='flex items-center justify-between'>
+                      <h2 className="text-3xl font-bold">
+                        {weather.cityInfo?.local_names?.vi || weather.cityInfo?.name || 'Unknown Location'}
+                      </h2>
+                      <p className="flex flex-col items-center pe-5 capitalize font-semibold"><WeatherIcon iconCode={weather.current.weather[0].icon} size={120} /> {weather.current.weather[0].description}</p>
+                    </div>
+                    <div className='flex items-end gap-3 pb-2'>
+                      <p className="text-4xl font-bold"> {weather.current.temp.toFixed(1)}°C</p>
+                      <p className='text-gray-400'>C: {weather.daily[0].temp.max.toFixed(1)}° T: {weather.daily[0].temp.min.toFixed(1)}°</p>
+                    </div>
                   </>
                 )}
               </div>
@@ -271,13 +277,13 @@ const Home = () => {
                           {element.pop && `${(element.pop * 100).toFixed(0)}%`}
                         </div>
                         <div className="grid grid-cols-3 items-center w-full gap-2">
-                          <div className="text-center font-bold text-sm">T: {element.temp.min.toFixed(1)}°C</div>
+                          <div className="text-center font-bold text-sm">T: {element.temp.min.toFixed(1)}°</div>
                           <TemperatureSlider
                             min={element.temp.min}
                             max={element.temp.max}
                             value={element.temp.day}
                           />
-                          <div className="text-center font-bold text-sm">C: {element.temp.max.toFixed(1)}°C</div>
+                          <div className="text-center font-bold text-sm">C: {element.temp.max.toFixed(1)}°</div>
                         </div>
                       </div>
                     </div>
@@ -287,9 +293,14 @@ const Home = () => {
             </div>
           </div>
           <div className="col-span-2 row-span-5 col-start-4">
-            <div className="grid grid-cols-2 grid-rows-5 gap-4">
+            <div className="grid grid-cols-2 grid-rows-3 gap-4">
               <CitiesWeather onSelectCity={handleSelectCity} />
-              <div className="col-span-2 row-span-2 row-start-4 shadow-md bg-white rounded-lg"></div>
+              <div className="col-span-2 row-span-2 row-start-4 shadow-md bg-white rounded-lg">
+                {weather && <AirPollution airPollution={weather.airPollution}/>}
+              </div>
+              <div className="col-span-2 row-span-2 row-start-6 shadow-md bg-white rounded-lg">
+                {weather && <AiAdvice weather={weather} aqi={weather.airPollution}/>}
+              </div>
             </div>
           </div>
         </div>

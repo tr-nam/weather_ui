@@ -23,6 +23,7 @@ jobs:
 
             echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" > .env
             echo "VITE_MAPBOX_API_KEY=${{ secrets.VITE_MAPBOX_API_KEY }}" >> .env
+            echo "VITE_GOOGLE_AI_API_KEY=${{ secrets.VITE_GOOGLE_AI_API_KEY }}" >> .env
 
             docker build -t weather_ui:latest .
 

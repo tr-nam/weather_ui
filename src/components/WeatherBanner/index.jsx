@@ -12,16 +12,16 @@ const MODEL_PATHS = {
 
 const CloudGroup = React.memo(({ count, precipitationProbability }) => {
   const cloudPositions = useMemo(() => {
-    const baseOpacity = 0.6 + (precipitationProbability / 100) * 0.3; // 0.6 to 0.9
+    const baseOpacity = 0.6 + (precipitationProbability / 100) * 0.5; // 0.6 to 0.9
     const baseWidth = 8 + (precipitationProbability / 100) * 12; // 8 to 20
-    const xRange = 30; // Total x-range: [-15, 15]
+    const xRange = 50; // Total x-range: [-15, 15]
     const step = count > 1 ? xRange / (count - 1) : 0; // Step size between clouds
 
     return Array.from({ length: count }).map((_, i) => ({
-      x: count > 1 ? -15 + i * step + (Math.random() - 0.5) * (step * 0.2) : (Math.random() - 0.5) * xRange,
-      y: 10 + Math.random() * 5, // Range [10, 15]
-      z: (-1 + Math.random() - 0.5) * 20, // Range [-21, -1]
-      width: Math.random() * baseWidth + 5,
+      x: count > 1 ? -20 + i * step + (Math.random() - 0.5) * (step * 0.2) : (Math.random() - 0.5) * xRange,
+      y: 5 + Math.random() * 5, // Range [10, 15]
+      z: (-1 + Math.random() - 0.5) * 10, // Range [-21, -1]
+      width: Math.random() * baseWidth + 50,
       opacity: Math.min(baseOpacity + Math.random() * 0.1, 0.9),
     }));
   }, [count, precipitationProbability]);
@@ -46,8 +46,8 @@ const StarEffect = React.memo(() => {
   const positions = useRef(new Float32Array(starCount * 3));
 
   useEffect(() => {
-    const width = 60;
-    const height = 30;
+    const width = 45;
+    const height = 20;
     for (let i = 0; i < starCount; i++) {
       positions.current[i * 3] = Math.random() * width - width / 2;
       positions.current[i * 3 + 1] = Math.random() * height - 10;
@@ -339,9 +339,9 @@ const WeatherBanner = ({
     timeOfDay: timeOfDay === 'auto' ? (
       (() => {
         const hour = new Date().getHours();
-        if (hour >= 5 && hour < 10) return 'dawn';
-        if (hour >= 10 && hour < 17) return 'day';
-        if (hour >= 17 && hour < 20) return 'dusk';
+        if (hour >= 5 && hour < 8) return 'dawn';
+        if (hour >= 8 && hour < 17) return 'day';
+        if (hour >= 17 && hour < 19) return 'dusk';
         return 'night';
       })()
     ) : timeOfDay,
