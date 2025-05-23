@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/3.0/';
+const AIR_QUALITY_URL = 'https://api.openweathermap.org/data/2.5/';
 const GEO_URL = 'https://api.openweathermap.org/geo/1.0/';
 
 /**
@@ -92,6 +93,45 @@ export const getCityByCoord = async (lat, lon) => {
   }
 };
 
+
+export const fetchAirQualityByCoord = async ({ lat, lon }, options = {}) => {
+  if (!API_KEY) {
+    throw new Error('API key không được thiết lập.');
+  }
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+    throw new Error('Tọa độ không hợp lệ.');
+  }
+
+  try {
+    const res = await axios.get(`${AIR_QUALITY_URL}air_pollution`, {
+      params: {
+        lat,
+        lon,
+        appid: API_KEY,
+      },
+      signal: options.signal,
+    });
+
+    // Trả về dữ liệu AQI và các chỉ số khí
+    return res.data;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+    if (error.response) {
+      const { status, data } = error.response;
+      if (status === 401) {
+        throw new Error('API key không hợp lệ.');
+      } else if (status === 429) {
+        throw new Error('Vượt giới hạn API miễn phí.');
+      } else {
+        throw new Error(`Lỗi từ API: ${data.message || 'Không xác định'}`);
+      }
+    }
+    throw new Error(`Lỗi: ${error.message}`);
+  }
+};
+
 /**
  * Lấy dữ liệu thời tiết từ OpenWeatherMap One Call API 3.0 dựa trên tọa độ.
  * @param {Object} coords - Tọa độ địa lý
@@ -121,17 +161,25 @@ export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
       },
       signal: options.signal,
     });
-    
+
     // Lấy thông tin thành phố
     let cityInfo = null;
     try {
       cityInfo = await getCityByCoord(lat, lon);
-    } catch (cityError) {
-      console.warn('Không thể lấy thông tin thành phố:', cityError.message);
+    } catch (Error) {
+      console.warn('Không thể lấy thông tin thành phố:', Error.message);
     }
-    return { 
-      ...res.data, 
-      cityInfo 
+    // Lấy thông tin chất lượng không khí
+    let airPollution = null;
+    try {
+      airPollution = await fetchAirQualityByCoord({ lat: lat, lon: lon });
+    } catch (Error) {
+      console.warn('Không thể lấy chất lượng không khí:', Error.message);
+    }
+    return {
+      ...res.data,
+      cityInfo,
+      airPollution
     };
   } catch (error) {
     if (error.name === 'AbortError') {
@@ -151,6 +199,8 @@ export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
   }
 };
 
+
+
 /**
  * Lấy dữ liệu thời tiết từ tên thành phố.
  * @param {string} city - Tên thành phố (ví dụ: "Hanoi")
@@ -161,7 +211,7 @@ export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
 export const fetchWeatherByCity = async (city, options = {}) => {
   const cityInfo = await getCoordinatesByCity(city);
   const { lat, lon } = cityInfo;
-  
+
   const weatherData = await fetchWeatherByCoord({ lat, lon }, options);
   return { ...weatherData, cityInfo };
 };
