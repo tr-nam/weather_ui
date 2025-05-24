@@ -8,10 +8,14 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import style from './style.module.css';
+
 import { formatTime } from '@/utils/timeUtils';
 import { formattedDate } from '@/utils/formattedDate';
 import { getWeekdayName } from '@/utils/dayUtils';
 import { normalizeCityKey } from '@/utils/normalizeCityKey';
+
+import { useSearch } from '@/context/SearchContext';
+
 import { fetchWeatherByCity, fetchWeatherByCoord, getDeviceLocation } from '@/api/weather';
 import WeatherIcon from '@/components/WeatherIcon';
 import SunTimeChart from '@/components/SunTimeChart';
@@ -29,6 +33,13 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isMinuteZero, setIsMinuteZero] = useState(false);
+
+  const { searchTerm } = useSearch();
+
+  //Tìm kiếm thành phố theo tên nhập từ thanh search
+  useEffect(() => {
+    setCity(searchTerm);    
+  }, [searchTerm]);
 
   // Kiểm tra xem có phải là đầu giờ (phút 00) không
   useEffect(() => {
@@ -135,11 +146,7 @@ const Home = () => {
     }
   }, [weather]);
 
-
-  // Hàm xử lý thay đổi city từ input
-  const handleCityChange = (e) => {
-    setCity(e.target.value);
-  };
+  
 
   // Hàm xử lý chọn thành phố từ CitiesWeather
   const handleSelectCity = (selectedCity) => {
@@ -168,11 +175,11 @@ const Home = () => {
           </div>
         )}
 
-        {error && (
+        {/* {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <p>Lỗi: {error}</p>//Chuyển thành hiệu ứng khác
           </div>
-        )}
+        )} */}
 
         <div className="grid grid-cols-5 grid-rows-5 gap-4">
           <div className="col-span-3 row-span-5 mb-24">
@@ -184,7 +191,7 @@ const Home = () => {
                     <p className='font-light text-gray-400'>Cập Nhật Lần Cuối: {formatTime(weather.current.dt)} - {formattedDate}</p>
                     <div className='flex items-center justify-between'>
                       <h2 className="text-3xl font-bold">
-                        {weather.cityInfo?.local_names?.vi || weather.cityInfo?.name || 'Unknown Location'}
+                        {weather?.cityInfo?.local_names?.vi || weather.cityInfo?.name || 'Unknown Location'}
                       </h2>
                       <p className="flex flex-col items-center pe-5 capitalize font-semibold"><WeatherIcon iconCode={weather.current.weather[0].icon} size={120} /> {weather.current.weather[0].description}</p>
                     </div>
