@@ -25,6 +25,7 @@ const Home = () => {
   const [city, setCity] = useState('');
   const [coord, setCoord] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [weatherEffect, setWeatherEffect] = useState();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isMinuteZero, setIsMinuteZero] = useState(false);
@@ -125,6 +126,16 @@ const Home = () => {
     };
   }, [city, coord, isMinuteZero]);
 
+  useEffect(() => {
+    const weathers = weather?.current?.weather;
+    if (weathers) {
+      const mainList = weathers.map((w) => w.main); // Lấy mảng các `main`
+      const formatText = mainList.toString().replace(',', ' ').toLowerCase()
+      setWeatherEffect(formatText);
+    }
+  }, [weather]);
+
+
   // Hàm xử lý thay đổi city từ input
   const handleCityChange = (e) => {
     setCity(e.target.value);
@@ -140,9 +151,9 @@ const Home = () => {
       <section className={clsx(style.banner, 'w-full py-2.5')}>
         {weather && (
           <div
-            className="h-90 flex justify-center items-center text-amber-500 shadow-md rounded-lg relative">
+            className="h-90 flex justify-center items-center shadow-md rounded-lg relative overflow-hidden">
             <WeatherBanner
-              weatherCondition={weather.current.weather[0].main.toLowerCase()}
+              weatherCondition={weatherEffect}
               precipitationProbability={weather.current.clouds || 0}
               timeOfDay={'auto'}
             />
@@ -159,7 +170,7 @@ const Home = () => {
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <p>Lỗi: {error}</p>
+            <p>Lỗi: {error}</p>//Chuyển thành hiệu ứng khác
           </div>
         )}
 
@@ -167,7 +178,7 @@ const Home = () => {
           <div className="col-span-3 row-span-5 mb-24">
             <div className="grid grid-cols-5 grid-rows-1 gap-4">
               {/* Main weather info */}
-              <div className="col-span-5 row-span-2 shadow-md bg-white rounded-lg text-black p-4 py-6">
+              <div className="col-span-5 row-span-2 shadow-md bg-white dark:bg-slate-700 rounded-lg text-black dark:text-slate-100 p-4 py-6">
                 {weather && (
                   <>
                     <p className='font-light text-gray-400'>Cập Nhật Lần Cuối: {formatTime(weather.current.dt)} - {formattedDate}</p>
@@ -185,39 +196,39 @@ const Home = () => {
                 )}
               </div>
               {/* Feels like */}
-              <div className="row-start-3 shadow-md bg-white rounded-lg p-4 text-center">
+              <div className="row-start-3 shadow-md rounded-lg p-4 text-center bg-white dark:bg-slate-700 text-black dark:text-slate-100">
                 <ThermometerSun className="text-amber-400 w-full" />
                 {weather && (
-                  <div className="text-black">
+                  <div className="text-black dark:text-slate-100">
                     <p>Cảm Giác Như</p>
                     <h2 className="text-2xl font-bold">{weather.current.feels_like.toFixed(1)}°C</h2>
                   </div>
                 )}
               </div>
               {/* Wind */}
-              <div className="row-start-3 shadow-md bg-white rounded-lg p-4 text-center">
+              <div className="row-start-3 shadow-md rounded-lg p-4 text-center bg-white dark:bg-slate-700 text-black dark:text-slate-100">
                 <Wind className="text-blue-400 w-full" />
                 {weather && (
-                  <div className="text-black">
+                  <div className="text-black dark:text-slate-100">
                     <p>Gió</p>
                     <h2 className="text-2xl font-bold">{(weather.current.wind_speed * 3.6).toFixed(1)} km/h</h2>
                   </div>
                 )}
               </div>
               {/* Humidity */}
-              <div className="row-start-3 shadow-md bg-white rounded-lg p-4 text-center">
+              <div className="row-start-3 shadow-md rounded-lg p-4 text-center bg-white dark:bg-slate-700 text-black dark:text-slate-100">
                 <Droplets className="text-amber-400 w-full" />
                 {weather && (
-                  <div className="text-black">
+                  <div className="text-black dark:text-slate-100">
                     <p>Độ Ẩm</p>
                     <h2 className="text-2xl font-bold">{weather.current.humidity}%</h2>
                   </div>
                 )}
               </div>
               {/* Sunrise, Sunset */}
-              <div className="row-start-3 col-span-2 shadow-md bg-white rounded-lg p-4 text-center">
+              <div className="row-start-3 col-span-2 shadow-md rounded-lg p-4 text-center bg-white dark:bg-slate-700 text-black dark:text-slate-100">
                 {weather && (
-                  <div className="text-black flex justify-between h-full relative">
+                  <div className="text-black dark:text-slate-100 flex justify-between h-full relative">
                     <span className="mt-auto ml-3">
                       <Sunrise className="text-amber-300 w-full" />
                       <p className="font-bold">{formatTime(weather.current.sunrise)}</p>
@@ -235,8 +246,8 @@ const Home = () => {
                 )}
               </div>
               {/* Hourly Forecast */}
-              <div className="col-span-5 row-span-1 row-start-4 shadow-md bg-white rounded-lg p-4">
-                <div className="grid grid-cols-9 grid-rows-3 gap-2 text-black">
+              <div className="col-span-5 row-span-1 row-start-4 shadow-md rounded-lg p-4 bg-white dark:bg-slate-700 text-black dark:text-slate-100">
+                <div className="grid grid-cols-9 grid-rows-3 gap-2 text-black dark:text-slate-100">
                   <div className="col-span-9 text-[20px] font-bold">
                     Dự báo theo giờ
                   </div>
@@ -259,8 +270,8 @@ const Home = () => {
                 </div>
               </div>
               {/* Daily Forecast */}
-              <div className="col-span-5 row-span-1 row-start-5 shadow-md bg-white rounded-lg p-4">
-                <div className="grid grid-cols-3 grid-rows-8 gap-1 text-black">
+              <div className="col-span-5 row-span-1 row-start-5 shadow-md  rounded-lg p-4 bg-white dark:bg-slate-700 text-black dark:text-slate-100">
+                <div className="grid grid-cols-3 grid-rows-8 gap-1 text-black dark:text-slate-100">
                   <div className="col-span-5 text-[20px] font-bold">
                     7 Ngày Tới
                   </div>
@@ -295,11 +306,11 @@ const Home = () => {
           <div className="col-span-2 row-span-5 col-start-4">
             <div className="grid grid-cols-2 grid-rows-3 gap-4">
               <CitiesWeather onSelectCity={handleSelectCity} />
-              <div className="col-span-2 row-span-2 row-start-4 shadow-md bg-white rounded-lg">
-                {weather && <AirPollution airPollution={weather.airPollution}/>}
+              <div className="col-span-2 row-span-2 row-start-4 shadow-md  rounded-lg">
+                {weather && <AirPollution airPollution={weather.airPollution} />}
               </div>
-              <div className="col-span-2 row-span-2 row-start-6 shadow-md bg-white rounded-lg">
-                {weather && <AiAdvice weather={weather} aqi={weather.airPollution}/>}
+              <div className="col-span-2 row-span-2 row-start-6 shadow-md  rounded-lg">
+                {weather && <AiAdvice weather={weather} aqi={weather.airPollution} />}
               </div>
             </div>
           </div>

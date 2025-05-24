@@ -175,7 +175,7 @@ const DailyAdvice = ({ weather, aqi }) => {
     };
 
     return (
-        <div className="shadow-md bg-white rounded-lg p-4 text-black">
+        <div className="shadow-md  rounded-lg p-4 bg-white dark:bg-slate-700 text-black dark:text-slate-100">
             <h2 className="text-xl font-bold mb-4">Lời Khuyên Hôm Nay</h2>
             <form onSubmit={handleActivitySubmit} className="mb-4 flex items-center gap-2">
                 <div className="relative w-full flex items-center">
@@ -190,7 +190,7 @@ const DailyAdvice = ({ weather, aqi }) => {
                         <button
                             type="button"
                             onClick={() => setUserActivity('')}
-                            className="absolute right-2 text-black font-bold bg-transparent p-2" 
+                            className="absolute right-2 'text-black dark:text-white font-bold bg-transparent p-2" 
                         >
                         x
                         </button>
@@ -204,7 +204,7 @@ const DailyAdvice = ({ weather, aqi }) => {
                     {isLoading ? 'Đang tải...' : 'Nhận lời khuyên'}
                 </button>
             </form>
-            <div className=' p-3 rounded-md bg-blue-100/60'>
+            <div className=' p-3 rounded-md bg-blue-100/60 dark:bg-gray-400/50'>
                 {aiAdvice ? <div className='pb-2 font-semibold text-[1rem]'>Lời khuyên từ AI</div> : <div className='py-2 font-semibold text-[1rem]'>Lời khuyên từ hệ thống</div>}
                 <ul className="space-y-3">
                     {isLoading ? (

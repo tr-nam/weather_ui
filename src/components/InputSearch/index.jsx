@@ -32,7 +32,7 @@ const StyledWrapper = styled.div`
     background-color: #f4f2f2;
     border: none;
     color: #646464;
-    padding: 0.7rem 1rem;
+    padding: 0.3rem 1rem;
     border-radius: 30px;
     width: 12em;
     transition: all ease-in-out .5s;
