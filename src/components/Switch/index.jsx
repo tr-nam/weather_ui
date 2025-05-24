@@ -19,20 +19,29 @@
 
 import React, { useState, useEffect } from 'react';
 
-const Switch = ({ textOn = 'ON', textOff = 'OFF', onChange }) => {
-  const LOCAL_KEY = 'my_switch_status';
-
+const Switch = ({ 
+  textOn = 'ON', 
+  textOff = 'OFF', 
+  onChange, 
+  localStorageKey = null 
+}) => {
   const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_KEY);
-    if (saved !== null) setIsChecked(saved === 'true');
-  }, []);
+    if (localStorageKey) {
+      const saved = localStorage.getItem(localStorageKey);
+      if (saved !== null) setIsChecked(saved === 'true');
+    }
+  }, [localStorageKey]);
 
   const handleToggle = (e) => {
     const value = e.target.checked;
     setIsChecked(value);
-    localStorage.setItem(LOCAL_KEY, value);
+
+    if (localStorageKey) {
+      localStorage.setItem(localStorageKey, value);
+    }
+
     onChange && onChange(value);
   };
 
@@ -56,5 +65,6 @@ const Switch = ({ textOn = 'ON', textOff = 'OFF', onChange }) => {
 };
 
 export default Switch;
+
 
 

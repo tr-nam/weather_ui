@@ -30,14 +30,14 @@ const MenuSettings = ({ onToggleTheme, onChangeLanguage, onToggleCF }) => {
                 <label className="block mb-1 text-mm font-medium text-gray-700 dark:text-gray-300">
                     Giao diện
                 </label>
-                <Switch onChange={toggleTheme} textOff='Sáng' textOn='Tối'/>
+                <Switch onChange={toggleTheme} textOff='Sáng' textOn='Tối' localStorageKey='theme'/>
             </div>
             {/* Unit Toggle */}
             <div className="flex items-center justify-between">
                 <label className="block mb-1 text-mm font-medium text-gray-700 dark:text-gray-300">
                     Đơn vị
                 </label>
-                <Switch onChange={()=>{handleUnitToggle}} textOff='°C' textOn='°F'/>
+                <Switch onChange={()=>{handleUnitToggle}} textOff='°C' textOn='°F' localStorageKey='until'/>
             </div>
 
             {/* Language Select */}
@@ -45,7 +45,7 @@ const MenuSettings = ({ onToggleTheme, onChangeLanguage, onToggleCF }) => {
                 <label className="block mb-1 text-mm font-medium text-gray-700 dark:text-gray-300">
                     Ngôn Ngữ
                 </label>
-                <Switch onChange={()=>{handleLanguageChange}} textOff='Vi' textOn='En'/>
+                <Switch onChange={()=>{handleLanguageChange}} textOff='Vi' textOn='En' localStorageKey='lang'/>
             </div>
         </div>
     );
