@@ -11,12 +11,12 @@ const index = ({ airPollution }) => {
     }, [airPollution])
     if (!airPollution) return <p>Đang tải ... </p>;
     return (
-        <div className="col-span-2 row-span-3 gap-2 shadow-md bg-white rounded-lg text-black p-4">
+        <div className="col-span-2 row-span-3 gap-2 shadow-md  rounded-lg p-4 bg-white dark:bg-slate-700 text-black dark:text-slate-100">
             <div className="col-span-2 text-[20px] font-bold">Chất Lượng Không Khí</div>
             <div className='flex items-center justify-between pt-4 pb-3'>
                 <p>Chỉ số AQI</p>
                 <p
-                    className="px-2.5 rounded-2xl text-black font-semibold"
+                    className="px-2.5 rounded-2xl text-black font-semibold dark:text-slate-100"
                     style={{ backgroundColor: aqi.color }}
                 >
                     {aqi.label}

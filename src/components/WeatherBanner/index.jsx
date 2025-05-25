@@ -150,17 +150,11 @@ const MountainModel = ({ timeOfDay, weatherType }) => {
   const [loadError, setLoadError] = useState(null);
 
   const gltf = useLoader(GLTFLoader, MODEL_PATHS.MOUNTAIN, undefined, (error) => {
-    console.error('Detailed error loading mountain model:', {
-      message: error.message || 'Unknown error',
-      type: error.type,
-      target: error.target ? error.target.responseURL : 'N/A',
-      status: error.target ? error.target.status : 'N/A',
-    });
-    setLoadError(error.message || 'Failed to load mountain model');
+    // setLoadError(error.message || 'Failed to load mountain model');
   });
 
   useEffect(() => {
-    console.log('MountainModel: Adding to scene', { timeOfDay, weatherType, loadError });
+    // console.log('MountainModel: Adding to scene', { timeOfDay, weatherType, loadError });
 
     let mountainGroup = new THREE.Group();
     if (gltf && !loadError) {
@@ -199,7 +193,7 @@ const MountainModel = ({ timeOfDay, weatherType }) => {
     }
 
     scene.add(mountainGroup);
-    console.log('MountainModel: Added to scene', mountainGroup);
+    // console.log('MountainModel: Added to scene', mountainGroup);
 
     if (timeOfDay === 'night') {
       const mountainLight = new THREE.PointLight(0xaaaaaa, 0.5, 50);
@@ -212,7 +206,7 @@ const MountainModel = ({ timeOfDay, weatherType }) => {
     }
 
     return () => {
-      console.log('MountainModel: Removing from scene');
+      // console.log('MountainModel: Removing from scene');
       scene.remove(mountainGroup);
       mountainGroup.traverse((child) => {
         if (child.geometry) child.geometry.dispose();
@@ -229,7 +223,7 @@ const WeatherScene = React.memo(({ weatherType, timeOfDay, precipitationProbabil
   const dirLightRef = useRef();
 
   useEffect(() => {
-    console.log('WeatherScene rendered', { weatherType, timeOfDay, precipitationProbability });
+    // console.log('WeatherScene rendered', { weatherType, timeOfDay, precipitationProbability });
   }, [weatherType, timeOfDay, precipitationProbability]);
 
   const cloudCount = useMemo(() => {
@@ -357,9 +351,9 @@ const WeatherBanner = ({
     snowAngle,
   }), [weatherCondition, precipitationProbability, rainSize, snowSize, rainAngle, snowAngle]);
 
-  useEffect(() => {
-    console.log('WeatherBanner rendered', props);
-  }, [props]);
+  // useEffect(() => {
+  //   console.log('WeatherBanner rendered', props);
+  // }, [props]);
 
   return (
     <div className="relative w-full h-[360px]">

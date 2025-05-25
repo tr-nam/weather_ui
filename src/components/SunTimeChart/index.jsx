@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 // Custom Tooltip Component with Sun or Moon Icon
 const CustomTooltip = ({ time, xPos, yPos, formatTime, isNight }) => {
   return (
-    <div style={{ position: 'absolute',top: yPos -(2 / yPos), left: xPos}}>
+    <div style={{ position: 'absolute', top: yPos - (2 / yPos), left: xPos }}>
       <div
+        className='text-black dark:text-white'
         style={{
           backgroundColor: 'transparent',
-          color: 'black',
           fontSize: '12px',
           position: 'absolute',
           top: yPos - 60,
