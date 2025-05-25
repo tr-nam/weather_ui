@@ -150,15 +150,15 @@ export const fetchAirQualityByCoord = async ({ lat, lon }, options = {}) => {
  * @returns {Promise<Object>} Dữ liệu thời tiết kết hợp với thông tin thành phố và chất lượng không khí
  * @throws {Error} Nếu có lỗi khi gọi API hoặc tọa độ không hợp lệ
  */
-export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
+export const fetchWeatherByCoord = async ({ lat, lon, unit= 'metric'}, options = {}) => {
   if (!API_KEY) {
     throw new Error('API key không được thiết lập.');
   }
   if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
     throw new Error('Tọa độ không hợp lệ.');
   }
-
   try {
+    console.log('Unit được gửi lên API:', unit);
     // Lấy dữ liệu thời tiết
     const res = await axios.get(`${BASE_URL}onecall`, {
       params: {
@@ -166,7 +166,7 @@ export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
         lon,
         appid: API_KEY,
         lang: 'vi',
-        units: 'metric',
+        units: unit,
       },
       signal: options.signal,
     });
@@ -208,8 +208,6 @@ export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
   }
 };
 
-
-
 /**
  * Lấy dữ liệu thời tiết dựa trên tên thành phố, tự động chuyển tên thành tọa độ trước khi gọi One Call API 3.0.
  *
@@ -218,23 +216,19 @@ export const fetchWeatherByCoord = async ({ lat, lon }, options = {}) => {
  * @returns {Promise<Object>} Dữ liệu thời tiết đầy đủ (bao gồm cả thông tin thành phố và chất lượng không khí)
  * @throws {Error} Nếu không thể lấy được tọa độ hoặc dữ liệu thời tiết
  */
-// export const fetchWeatherByCity = async (city, options = {}) => {
-//   const cityInfo = await getCoordinatesByCity(city);
-//   const { lat, lon } = cityInfo;
 
-//   const weatherData = await fetchWeatherByCoord({ lat, lon }, options);
-//   return { ...weatherData, cityInfo };
-// };
-export const fetchWeatherByCity = async (city, options = {}) => {
+export const fetchWeatherByCity = async ({city, unit}, options = {}) => {
   const geoResults = await getCoordinatesByCity(city);
   const cityInfo = geoResults[0]; // Lấy kết quả đầu tiên
+
 
   if (!cityInfo || !cityInfo.lat || !cityInfo.lon) {
     throw new Error(`Không thể tìm thấy tọa độ cho thành phố: ${city}`);
   }
 
+  
   const { lat, lon } = cityInfo;
-  const weatherData = await fetchWeatherByCoord({ lat, lon }, options);
+  const weatherData = await fetchWeatherByCoord({ lat, lon, unit}, options);
   return { ...weatherData, cityInfo };
 };
 

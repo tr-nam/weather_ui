@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { UnitContext } from "@/context/UnitContext";
 
 function TemperatureSlider({ min, max, value }) {
+  const {unit} = useContext(UnitContext);
   const [isHovering, setIsHovering] = useState(false);
 
   const percent = ((value - min) / (max - min)) * 100;
@@ -13,7 +15,7 @@ function TemperatureSlider({ min, max, value }) {
           className="absolute -top-10 text-sm font-medium text-white bg-black px-2 py-1 rounded"
           style={{ left: `calc(${percent}% - 35px)` }}
         >
-          {value.toFixed(1)}°C
+          {value.toFixed(1)}°{unit === 'metric' ? 'C' : 'F'}
         </div>
       )}
 

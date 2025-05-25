@@ -1,16 +1,17 @@
 import axios from 'axios';
+import { uint } from 'three/tsl';
 
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_AI_API_KEY;
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
-export const getAiAdvice = async (weather, aqi, activity = '') => {
-
+export const getAiAdvice = async (weather, aqi, activity = '', unit) => {
+     
     if (!weather || !weather.current || !weather.daily) {
         return 'Không có dữ liệu thời tiết để tạo lời khuyên.';
     }
 
     const prompt = `Bạn là một chuyên gia thời tiết và sức khỏe cộng đồng. Dựa trên các dữ liệu sau:
-                    - Nhiệt độ: ${weather.current.temp}°C  
+                    - Nhiệt độ: ${weather.current.temp}°${unit === 'metric' ? 'C' : 'F'}  
                     - Độ ẩm: ${weather.current.humidity}%  
                     - Xác suất mưa: ${(weather.daily[0].pop * 100).toFixed(0)}%  
                     - Chỉ số chất lượng không khí (AQI): ${aqi.list[0].main.aqi} (AQI từ 1 đến 5, tương ứng với các mức: 1 - Tốt, 2 - Ổn, 3 - Ô nhiễm nhẹ, 4 - Ô nhiễm nặng, 5 - Nguy hiểm)  

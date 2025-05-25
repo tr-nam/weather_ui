@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import {
   ThermometerSun,
   Wind,
@@ -15,6 +15,7 @@ import { getWeekdayName } from '@/utils/dayUtils';
 import { normalizeCityKey } from '@/utils/normalizeCityKey';
 
 import { useSearch } from '@/context/SearchContext';
+import { UnitContext } from '@/context/UnitContext';
 
 import { fetchWeatherByCity, fetchWeatherByCoord, getDeviceLocation } from '@/api/weather';
 import WeatherIcon from '@/components/WeatherIcon';
@@ -25,6 +26,8 @@ import WeatherBanner from '@/components/WeatherBanner';
 import AirPollution from '@/components/AirPollution';
 import AiAdvice from '@/components/AiAdvice';
 
+
+
 const Home = () => {
   const [city, setCity] = useState('');
   const [coord, setCoord] = useState(null);
@@ -33,12 +36,16 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isMinuteZero, setIsMinuteZero] = useState(false);
+  const { unit } = useContext(UnitContext);
+
 
   const { searchTerm } = useSearch();
 
+
+
   //Tìm kiếm thành phố theo tên nhập từ thanh search
   useEffect(() => {
-    setCity(searchTerm);    
+    setCity(searchTerm);
   }, [searchTerm]);
 
   // Kiểm tra xem có phải là đầu giờ (phút 00) không
@@ -67,7 +74,77 @@ const Home = () => {
     fetchLocation();
   }, []);
 
+
   // Fetch dữ liệu thời tiết khi city, coord hoặc isMinuteZero thay đổi
+  // useEffect(() => {
+  //   const controller = new AbortController();
+
+  //   const fetchWeatherData = async () => {
+  //     if (!city && !coord) return;
+
+  //     const dataSource = city
+  //       ? { type: 'city', value: city }
+  //       : { type: 'coord', value: { lat: coord.latitude, lon: coord.longitude } };
+
+  //     const cacheKey = dataSource.type === 'city'
+  //       ? `weather_${normalizeCityKey(city)}`
+  //       : `weather_coord_${dataSource.value.lat.toFixed(3)}_${dataSource.value.lon.toFixed(3)}`;
+
+  //     const cachedData = localStorage.getItem(cacheKey)
+  //       ? JSON.parse(localStorage.getItem(cacheKey))
+  //       : null;
+  //     const CACHE_DURATION = 3600000; // 1 giờ
+
+  //     if (
+  //       cachedData &&
+  //       Date.now() - cachedData.timestamp < CACHE_DURATION &&
+  //       !isMinuteZero
+  //     ) {
+  //       setWeather(cachedData.data);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     setIsLoading(true);
+  //     setError(null);
+
+  //     try {
+  //       let weatherData;
+
+  //       if (dataSource.type === 'city') {
+  //         weatherData = await fetchWeatherByCity(dataSource.value, unit, {
+  //           signal: controller.signal,
+  //         });
+  //       } else {
+  //         weatherData = await fetchWeatherByCoord(dataSource.value, unit, {
+  //           signal: controller.signal,
+  //         });
+  //       }
+
+  //       setWeather(weatherData);
+  //       localStorage.setItem(
+  //         cacheKey,
+  //         JSON.stringify({ data: weatherData, timestamp: Date.now() })
+  //       );
+  //     } catch (error) {
+  //       if (error.name === 'AbortError') {
+  //         console.log('API request cancelled.');
+  //         return;
+  //       }
+  //       setError(error.message);
+  //       console.error('Error fetching weather data:', error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   fetchWeatherData();
+
+  //   return () => {
+  //     controller.abort();
+  //   };
+  // }, [city, coord, isMinuteZero, unit]);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -75,12 +152,13 @@ const Home = () => {
       if (!city && !coord) return;
 
       const dataSource = city
-        ? { type: 'city', value: city }
-        : { type: 'coord', value: { lat: coord.latitude, lon: coord.longitude } };
+        ? { type: 'city', value: {city: city, unit: unit} }
+        : { type: 'coord', value: { lat: coord.latitude, lon: coord.longitude, unit: unit } };
 
+      // Thêm unit vào key để đảm bảo cache tách biệt theo đơn vị
       const cacheKey = dataSource.type === 'city'
-        ? `weather_${normalizeCityKey(city)}`
-        : `weather_coord_${dataSource.value.lat.toFixed(3)}_${dataSource.value.lon.toFixed(3)}`;
+        ? `weather_${normalizeCityKey(city)}_${unit}`
+        : `weather_coord_${dataSource.value.lat.toFixed(3)}_${dataSource.value.lon.toFixed(3)}_${unit}`;
 
       const cachedData = localStorage.getItem(cacheKey)
         ? JSON.parse(localStorage.getItem(cacheKey))
@@ -104,6 +182,7 @@ const Home = () => {
         let weatherData;
 
         if (dataSource.type === 'city') {
+          console.log('Gọi fetchWeatherByCity với unit:', unit);
           weatherData = await fetchWeatherByCity(dataSource.value, {
             signal: controller.signal,
           });
@@ -129,13 +208,15 @@ const Home = () => {
         setIsLoading(false);
       }
     };
-
+    console.log(unit);
+    
     fetchWeatherData();
 
     return () => {
       controller.abort();
     };
-  }, [city, coord, isMinuteZero]);
+  }, [city, coord, isMinuteZero, unit]);
+
 
   useEffect(() => {
     const weathers = weather?.current?.weather;
@@ -146,7 +227,7 @@ const Home = () => {
     }
   }, [weather]);
 
-  
+
 
   // Hàm xử lý chọn thành phố từ CitiesWeather
   const handleSelectCity = (selectedCity) => {
@@ -196,7 +277,7 @@ const Home = () => {
                       <p className="flex flex-col items-center pe-5 capitalize font-semibold"><WeatherIcon iconCode={weather.current.weather[0].icon} size={120} /> {weather.current.weather[0].description}</p>
                     </div>
                     <div className='flex items-end gap-3 pb-2'>
-                      <p className="text-4xl font-bold"> {weather.current.temp.toFixed(1)}°C</p>
+                      <p className="text-4xl font-bold"> {weather ? `${weather.current.temp.toFixed(1)}°${unit === 'metric' ? 'C' : 'F'}` : '--'}</p>
                       <p className='text-gray-400'>C: {weather.daily[0].temp.max.toFixed(1)}° T: {weather.daily[0].temp.min.toFixed(1)}°</p>
                     </div>
                   </>
@@ -208,7 +289,7 @@ const Home = () => {
                 {weather && (
                   <div className="text-black dark:text-slate-100">
                     <p>Cảm Giác Như</p>
-                    <h2 className="text-2xl font-bold">{weather.current.feels_like.toFixed(1)}°C</h2>
+                    <h2 className="text-2xl font-bold">{weather.current.feels_like.toFixed(1)}°{unit === 'metric' ? 'C' : 'F'}</h2>
                   </div>
                 )}
               </div>
@@ -270,7 +351,7 @@ const Home = () => {
                       </span>
                       <WeatherIcon iconCode={element.weather[0].icon} size={64} />
                       <span className="font-medium">
-                        {element.temp.toFixed(1)}°C
+                        {element.temp.toFixed(1)}°{unit === 'metric' ? 'C' : 'F'}
                       </span>
                     </div>
                   ))}
@@ -317,7 +398,7 @@ const Home = () => {
                 {weather && <AirPollution airPollution={weather.airPollution} />}
               </div>
               <div className="col-span-2 row-span-2 row-start-6 shadow-md  rounded-lg">
-                {weather && <AiAdvice weather={weather} aqi={weather.airPollution} />}
+                {weather && <AiAdvice weather={weather} aqi={weather.airPollution} unit={unit}/>}
               </div>
             </div>
           </div>

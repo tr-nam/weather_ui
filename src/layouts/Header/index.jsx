@@ -12,11 +12,11 @@ const Header = () => {
 
     const navigation = [
         {
-            name: "Home",
+            name: "Trang chủ",
             link: "/"
         },
         {
-            name: "Map",
+            name: "Bản đồ",
             link: "/map"
         },
     ]

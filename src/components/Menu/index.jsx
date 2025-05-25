@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { ThemeContext } from '@/context/ThemeContext';
+import { UnitContext } from '@/context/UnitContext';
 
 import Switch from '@/components/Switch';
 
@@ -7,19 +8,8 @@ import Switch from '@/components/Switch';
 const MenuSettings = ({ onToggleTheme, onChangeLanguage, onToggleCF }) => {
     const { toggleTheme } = useContext(ThemeContext);
     const [language, setLanguage] = useState('vi');
-    const [unit, setUnit] = useState('C');
+    const { unit, toggleUnit } = useContext(UnitContext);
 
-    const handleLanguageChange = (e) => {
-        const lang = e.target.value;
-        setLanguage(lang);
-        onChangeLanguage(lang);
-    };
-
-    const handleUnitToggle = () => {
-        const nextUnit = unit === 'C' ? 'F' : 'C';
-        setUnit(nextUnit);
-        onToggleCF(nextUnit);
-    };
 
     return (
         <div className="p-4 w-64">
@@ -37,7 +27,7 @@ const MenuSettings = ({ onToggleTheme, onChangeLanguage, onToggleCF }) => {
                 <label className="block mb-1 text-mm font-medium text-gray-700 dark:text-gray-300">
                     Đơn vị
                 </label>
-                <Switch onChange={()=>{handleUnitToggle}} textOff='°C' textOn='°F' localStorageKey='until'/>
+                <Switch onChange={toggleUnit} textOff='°C' textOn='°F' localStorageKey='until_toggle' valuePop={{ true: 'imperial', false: 'metric' }}/>
             </div>
 
             {/* Language Select */}

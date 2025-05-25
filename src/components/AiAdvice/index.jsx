@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { Thermometer, Droplets, Wind, Umbrella, AlertTriangle, CloudRain, Sun, Moon } from 'lucide-react';
 import { getAiAdvice } from '@/api/ai';
+import { useContext } from 'react';
+import { UnitContext } from '@/context/UnitContext';
+
 
 /**
  * Component hiển thị lời khuyên hàng ngày dựa trên thời tiết, chất lượng không khí, và hoạt động người dùng
@@ -14,6 +17,8 @@ const DailyAdvice = ({ weather, aqi }) => {
     const [userActivity, setUserActivity] = useState('');
     const [aiAdvice, setAiAdvice] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const { unit } = useContext(UnitContext);
+
 
     // Hàm xác định thời gian trong ngày
     const getTimeOfDay = () => {
@@ -41,7 +46,7 @@ const DailyAdvice = ({ weather, aqi }) => {
             }
         };
         fetchAiAdvice();
-    }, [weather, aqi]);
+    }, [weather, aqi, unit]);
 
     // Hàm tạo danh sách lời khuyên cục bộ (fallback)
     const generateLocalAdvice = () => {
@@ -164,7 +169,7 @@ const DailyAdvice = ({ weather, aqi }) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const advice = await getAiAdvice(weather, aqi, userActivity);
+            const advice = await getAiAdvice(weather, aqi, userActivity, unit);
             setAiAdvice([{ icon: AlertTriangle, text: advice }]);
         } catch (error) {
             console.error('Failed to fetch AI advice on submit:', error.message);
@@ -190,9 +195,9 @@ const DailyAdvice = ({ weather, aqi }) => {
                         <button
                             type="button"
                             onClick={() => setUserActivity('')}
-                            className="absolute right-2 'text-black dark:text-white font-bold bg-transparent p-2" 
+                            className="absolute right-2 'text-black dark:text-white font-bold bg-transparent p-2"
                         >
-                        x
+                            x
                         </button>
                     )}
                 </div>
