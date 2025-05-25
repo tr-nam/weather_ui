@@ -36,7 +36,7 @@ const DailyAdvice = ({ weather, aqi }) => {
             if (!weather || !weather.current || !weather.daily) return;
             setIsLoading(true);
             try {
-                const advice = await getAiAdvice(weather, aqi);
+                const advice = await getAiAdvice(weather, aqi, userActivity, unit);
                 setAiAdvice([{ icon: AlertTriangle, text: advice }]);
             } catch (error) {
                 console.error('Failed to fetch AI advice:', error.message);
