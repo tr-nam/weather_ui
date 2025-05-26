@@ -262,8 +262,8 @@ const Home = () => {
           </div>
         )} */}
 
-        <div className="grid grid-cols-5 grid-rows-5 gap-4">
-          <div className="col-span-3 row-span-5 mb-24">
+        <div className="grid grid-cols-5 grid-rows-2 gap-4">
+          <div className="col-span-3 row-span-5 mb-5">
             <div className="grid grid-cols-5 grid-rows-1 gap-4">
               {/* Main weather info */}
               <div className="col-span-5 row-span-2 shadow-md bg-white dark:bg-slate-700 rounded-lg text-black dark:text-slate-100 p-4 py-6">

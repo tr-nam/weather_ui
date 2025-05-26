@@ -6,6 +6,7 @@ import { UnitProvider } from '@/context/UnitContext';
 
 import Header from './layouts/Header'
 import Content from './layouts/Content'
+import Footer from './layouts/Footer'
 import HomePage from './pages/Home';
 import MapPage from './pages/Map';
 
@@ -21,6 +22,7 @@ const App = () => {
               <Route path="/map" element={<MapPage />} />
             </Routes>
           </Content>
+          <Footer/>
         </SearchProvider>
       </UnitProvider>
     </ThemeProvider>
