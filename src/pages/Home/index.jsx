@@ -74,77 +74,6 @@ const Home = () => {
     fetchLocation();
   }, []);
 
-
-  // Fetch dữ liệu thời tiết khi city, coord hoặc isMinuteZero thay đổi
-  // useEffect(() => {
-  //   const controller = new AbortController();
-
-  //   const fetchWeatherData = async () => {
-  //     if (!city && !coord) return;
-
-  //     const dataSource = city
-  //       ? { type: 'city', value: city }
-  //       : { type: 'coord', value: { lat: coord.latitude, lon: coord.longitude } };
-
-  //     const cacheKey = dataSource.type === 'city'
-  //       ? `weather_${normalizeCityKey(city)}`
-  //       : `weather_coord_${dataSource.value.lat.toFixed(3)}_${dataSource.value.lon.toFixed(3)}`;
-
-  //     const cachedData = localStorage.getItem(cacheKey)
-  //       ? JSON.parse(localStorage.getItem(cacheKey))
-  //       : null;
-  //     const CACHE_DURATION = 3600000; // 1 giờ
-
-  //     if (
-  //       cachedData &&
-  //       Date.now() - cachedData.timestamp < CACHE_DURATION &&
-  //       !isMinuteZero
-  //     ) {
-  //       setWeather(cachedData.data);
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     setIsLoading(true);
-  //     setError(null);
-
-  //     try {
-  //       let weatherData;
-
-  //       if (dataSource.type === 'city') {
-  //         weatherData = await fetchWeatherByCity(dataSource.value, unit, {
-  //           signal: controller.signal,
-  //         });
-  //       } else {
-  //         weatherData = await fetchWeatherByCoord(dataSource.value, unit, {
-  //           signal: controller.signal,
-  //         });
-  //       }
-
-  //       setWeather(weatherData);
-  //       localStorage.setItem(
-  //         cacheKey,
-  //         JSON.stringify({ data: weatherData, timestamp: Date.now() })
-  //       );
-  //     } catch (error) {
-  //       if (error.name === 'AbortError') {
-  //         console.log('API request cancelled.');
-  //         return;
-  //       }
-  //       setError(error.message);
-  //       console.error('Error fetching weather data:', error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchWeatherData();
-
-  //   return () => {
-  //     controller.abort();
-  //   };
-  // }, [city, coord, isMinuteZero, unit]);
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -152,7 +81,7 @@ const Home = () => {
       if (!city && !coord) return;
 
       const dataSource = city
-        ? { type: 'city', value: {city: city, unit: unit} }
+        ? { type: 'city', value: { city: city, unit: unit } }
         : { type: 'coord', value: { lat: coord.latitude, lon: coord.longitude, unit: unit } };
 
       // Thêm unit vào key để đảm bảo cache tách biệt theo đơn vị
@@ -209,7 +138,7 @@ const Home = () => {
       }
     };
     console.log(unit);
-    
+
     fetchWeatherData();
 
     return () => {
@@ -256,11 +185,35 @@ const Home = () => {
           </div>
         )}
 
-        {/* {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <p>Lỗi: {error}</p>//Chuyển thành hiệu ứng khác
+        {error && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+            <div className="flex flex-col items-center bg-white p-6 rounded-lg shadow-lg">
+              <svg
+                className="animate-spin h-8 w-8 text-red-600 mb-3"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                ></path>
+              </svg>
+              <p className="text-red-600 font-medium text-center">Đã xảy ra lỗi! Vui lòng thử lại sau.</p>
+            </div>
           </div>
-        )} */}
+        )}
+
+
 
         <div className="grid grid-cols-5 grid-rows-2 gap-4">
           <div className="col-span-3 row-span-5 mb-5">
@@ -398,7 +351,7 @@ const Home = () => {
                 {weather && <AirPollution airPollution={weather.airPollution} />}
               </div>
               <div className="col-span-2 row-span-2 row-start-6 shadow-md  rounded-lg">
-                {weather && <AiAdvice weather={weather} aqi={weather.airPollution} unit={unit}/>}
+                {weather && <AiAdvice weather={weather} aqi={weather.airPollution} unit={unit} />}
               </div>
             </div>
           </div>
