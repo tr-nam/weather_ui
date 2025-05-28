@@ -9,7 +9,7 @@ const Footer = () => {
                     Dữ liệu thời tiết từ <a href="https://openweathermap.org/" className="underline hover:text-yellow-500" target="_blank" rel="noreferrer">OpenWeather</a>.
                 </div>
                 <div className="text-base text-gray-500 dark:text-gray-400">
-                    © {new Date().getFullYear()} NamTr_n, All rights Reserved..
+                    © {new Date().getFullYear()} <a href="https://wvutran.id.vn/" className="underline hover:text-yellow-500" target="_blank" rel="noreferrer">NamTr_n</a>, All rights Reserved..
                 </div>
             </div>
         </footer>
