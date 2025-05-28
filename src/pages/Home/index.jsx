@@ -171,7 +171,7 @@ const Home = () => {
             className="h-90 flex justify-center items-center shadow-md rounded-lg relative overflow-hidden">
             <WeatherBanner
               weatherCondition={weatherEffect}
-              precipitationProbability={weather.current.clouds || 0}
+              precipitationProbability={ weather.current.clouds * 5}
               timeOfDay={'auto'}
             />
           </div>
